@@ -28,6 +28,8 @@
   .spinner { width: 32px; height: 32px; border: 3px solid #e8e2d4; border-top-color: #0f5e52; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  .cloud-badge { position: fixed; bottom: 16px; right: 16px; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 500; z-index: 50; display: flex; align-items: center; gap: 6px; }
+
   @media print {
     body * { visibility: hidden; }
     .print-area, .print-area * { visibility: visible; }
@@ -39,16 +41,22 @@
 <body>
 <div id="loading">
   <div class="spinner"></div>
-  <div style="font-size: 14px; color: #6b6558;">جاري التحميل...</div>
+  <div style="font-size: 14px; color: #6b6558;">جاري الاتصال بالسحابة...</div>
 </div>
 <div id="root"></div>
 
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <script type="text/babel" data-presets="react">
-const { useState, useEffect, useMemo } = React;
+const { useState, useEffect, useMemo, useRef } = React;
+
+// ==================== SUPABASE CONFIG ====================
+const SUPABASE_URL = 'https://qxwwyuczgjoczqnzlewi.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_N6Jj6iGYva7s6THtP-YQqw_Yvzp1z4a';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ==================== ICONS ====================
 const SvgIcon = ({ size = 16, color = 'currentColor', strokeWidth = 2, style, children }) => (
@@ -81,19 +89,10 @@ const Building2 = (p) => <SvgIcon {...p}><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 
 const ChevronDown = (p) => <SvgIcon {...p}><path d="m6 9 6 6 6-6"/></SvgIcon>;
 const Check = (p) => <SvgIcon {...p}><path d="M20 6 9 17l-5-5"/></SvgIcon>;
 const Store = (p) => <SvgIcon {...p}><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M2 7h20"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/></SvgIcon>;
-const Download = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></SvgIcon>;
-const Upload = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></SvgIcon>;
+const Cloud = (p) => <SvgIcon {...p}><path d="M17.5 19a4.5 4.5 0 1 0 0-9h-1.8A7 7 0 1 0 4 15.9"/></SvgIcon>;
+const AlertTriangle = (p) => <SvgIcon {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></SvgIcon>;
 
 // ==================== CONSTANTS ====================
-const STORAGE_KEY = 'kw-order-mgmt-v1';
-
-const DEFAULT_DATA = {
-  orders: [],
-  products: [],
-  settings: { shopName: 'متجري', shopPhone: '', defaultDeliveryFee: 1.000 },
-  nextOrderNumber: 1001
-};
-
 const STATUSES = {
   new: { label: 'جديد', bg: '#eff6ff', fg: '#1d4ed8', border: '#bfdbfe', dot: '#3b82f6' },
   preparing: { label: 'قيد التجهيز', bg: '#fffbeb', fg: '#b45309', border: '#fde68a', dot: '#f59e0b' },
@@ -116,7 +115,6 @@ const PAYMENTS = {
 
 // ==================== HELPERS ====================
 const fmt = (n) => Number(n || 0).toFixed(3);
-const uid = () => Math.random().toString(36).slice(2, 10);
 
 const formatDate = (ts) => {
   if (!ts) return '';
@@ -137,10 +135,53 @@ const isToday = (ts) => {
   return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
 };
 
+// Convert DB row → App format
+const dbOrderToApp = (row) => ({
+  id: row.id,
+  orderNumber: row.order_number,
+  customerName: row.customer_name,
+  customerPhone: row.customer_phone || '',
+  address: row.address || { area: '', block: '', street: '', avenue: '', house: '', extra: '' },
+  items: row.items || [],
+  subtotal: Number(row.subtotal) || 0,
+  deliveryFee: Number(row.delivery_fee) || 0,
+  total: Number(row.total) || 0,
+  paymentMethod: row.payment_method || 'cash',
+  source: row.source || 'whatsapp',
+  status: row.status || 'new',
+  notes: row.notes || '',
+  createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+  updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now()
+});
+
+const appOrderToDb = (order) => ({
+  customer_name: order.customerName,
+  customer_phone: order.customerPhone || null,
+  address: order.address || {},
+  items: order.items || [],
+  subtotal: order.subtotal || 0,
+  delivery_fee: order.deliveryFee || 0,
+  total: order.total || 0,
+  payment_method: order.paymentMethod || 'cash',
+  source: order.source || 'whatsapp',
+  status: order.status || 'new',
+  notes: order.notes || null
+});
+
+const dbProductToApp = (row) => ({
+  id: row.id,
+  name: row.name,
+  price: Number(row.price) || 0,
+  createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now()
+});
+
 // ==================== MAIN APP ====================
 function OrderManagementApp() {
-  const [data, setData] = useState(DEFAULT_DATA);
+  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [settings, setSettings] = useState({ shopName: 'متجري', shopPhone: '', defaultDeliveryFee: 1.000 });
   const [loaded, setLoaded] = useState(false);
+  const [connError, setConnError] = useState(null);
   const [view, setView] = useState('dashboard');
   const [editingOrder, setEditingOrder] = useState(null);
   const [viewingOrder, setViewingOrder] = useState(null);
@@ -150,110 +191,173 @@ function OrderManagementApp() {
   const [printOrder, setPrintOrder] = useState(null);
   const [toast, setToast] = useState(null);
 
-  useEffect(() => {
+  // Load all data from Supabase
+  const loadData = async () => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setData({ ...DEFAULT_DATA, ...parsed, settings: { ...DEFAULT_DATA.settings, ...(parsed.settings || {}) } });
+      const [ordersRes, productsRes, settingsRes] = await Promise.all([
+        supabase.from('orders').select('*').order('created_at', { ascending: false }),
+        supabase.from('products').select('*').order('created_at', { ascending: false }),
+        supabase.from('settings').select('*').eq('id', 1).maybeSingle()
+      ]);
+
+      if (ordersRes.error) throw ordersRes.error;
+      if (productsRes.error) throw productsRes.error;
+      if (settingsRes.error) throw settingsRes.error;
+
+      setOrders((ordersRes.data || []).map(dbOrderToApp));
+      setProducts((productsRes.data || []).map(dbProductToApp));
+      if (settingsRes.data) {
+        setSettings({
+          shopName: settingsRes.data.shop_name || 'متجري',
+          shopPhone: settingsRes.data.shop_phone || '',
+          defaultDeliveryFee: Number(settingsRes.data.default_delivery_fee) || 1.000
+        });
       }
-    } catch (e) { console.error('Load failed', e); }
-    setLoaded(true);
-    const el = document.getElementById('loading');
-    if (el) el.classList.add('hidden');
-  }, []);
+      setConnError(null);
+    } catch (err) {
+      console.error('Load error:', err);
+      setConnError(err.message || 'فشل الاتصال بالسحابة');
+    } finally {
+      setLoaded(true);
+      const el = document.getElementById('loading');
+      if (el) el.classList.add('hidden');
+    }
+  };
 
   useEffect(() => {
+    loadData();
+  }, []);
+
+  // Realtime subscription
+  useEffect(() => {
     if (!loaded) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) { console.error('Save failed', e); }
-  }, [data, loaded]);
+    const channel = supabase
+      .channel('orders-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        loadData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+        loadData();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [loaded]);
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 2500);
   };
 
-  const saveOrder = (order) => {
-    setData(prev => {
-      const now = Date.now();
+  // ========== ORDER ACTIONS ==========
+  const saveOrder = async (order) => {
+    try {
+      const payload = appOrderToDb(order);
       if (order.id) {
-        return { ...prev, orders: prev.orders.map(o => o.id === order.id ? { ...order, updatedAt: now } : o) };
+        const { error } = await supabase.from('orders').update(payload).eq('id', order.id);
+        if (error) throw error;
+        showToast('تم تحديث الطلب');
       } else {
-        const newOrder = { ...order, id: uid(), orderNumber: prev.nextOrderNumber, createdAt: now, updatedAt: now };
-        return { ...prev, orders: [newOrder, ...prev.orders], nextOrderNumber: prev.nextOrderNumber + 1 };
+        const { error } = await supabase.from('orders').insert(payload);
+        if (error) throw error;
+        showToast('تم إضافة الطلب');
       }
-    });
-    setShowOrderForm(false);
-    setEditingOrder(null);
-    showToast(order.id ? 'تم تحديث الطلب' : 'تم إضافة الطلب');
+      setShowOrderForm(false);
+      setEditingOrder(null);
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      showToast('خطأ: ' + err.message, 'error');
+    }
   };
 
-  const deleteOrder = (id) => {
+  const deleteOrder = async (id) => {
     if (!window.confirm('تبي تحذف الطلب؟ ما راح نقدر نرجعه.')) return;
-    setData(prev => ({ ...prev, orders: prev.orders.filter(o => o.id !== id) }));
-    setViewingOrder(null);
-    showToast('تم حذف الطلب');
+    try {
+      const { error } = await supabase.from('orders').delete().eq('id', id);
+      if (error) throw error;
+      setViewingOrder(null);
+      showToast('تم حذف الطلب');
+      await loadData();
+    } catch (err) {
+      showToast('خطأ: ' + err.message, 'error');
+    }
   };
 
-  const updateOrderStatus = (id, status) => {
-    setData(prev => ({ ...prev, orders: prev.orders.map(o => o.id === id ? { ...o, status, updatedAt: Date.now() } : o) }));
+  const updateOrderStatus = async (id, status) => {
+    try {
+      const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+      if (error) throw error;
+      await loadData();
+    } catch (err) {
+      showToast('خطأ: ' + err.message, 'error');
+    }
   };
 
-  const saveProduct = (product) => {
-    setData(prev => {
+  // ========== PRODUCT ACTIONS ==========
+  const saveProduct = async (product) => {
+    try {
+      const payload = { name: product.name, price: product.price };
       if (product.id) {
-        return { ...prev, products: prev.products.map(p => p.id === product.id ? product : p) };
+        const { error } = await supabase.from('products').update(payload).eq('id', product.id);
+        if (error) throw error;
+        showToast('تم تحديث المنتج');
       } else {
-        return { ...prev, products: [...prev.products, { ...product, id: uid(), createdAt: Date.now() }] };
+        const { error } = await supabase.from('products').insert(payload);
+        if (error) throw error;
+        showToast('تم إضافة المنتج');
       }
-    });
-    setShowProductForm(false);
-    setEditingProduct(null);
-    showToast(product.id ? 'تم تحديث المنتج' : 'تم إضافة المنتج');
+      setShowProductForm(false);
+      setEditingProduct(null);
+      await loadData();
+    } catch (err) {
+      showToast('خطأ: ' + err.message, 'error');
+    }
   };
 
-  const deleteProduct = (id) => {
+  const deleteProduct = async (id) => {
     if (!window.confirm('تبي تحذف المنتج؟')) return;
-    setData(prev => ({ ...prev, products: prev.products.filter(p => p.id !== id) }));
-    showToast('تم حذف المنتج');
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw error;
+      showToast('تم حذف المنتج');
+      await loadData();
+    } catch (err) {
+      showToast('خطأ: ' + err.message, 'error');
+    }
   };
 
-  const saveSettings = (settings) => {
-    setData(prev => ({ ...prev, settings }));
-    showToast('تم حفظ الإعدادات');
-  };
-
-  const exportData = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const d = new Date();
-    a.download = `orders-backup-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('تم تصدير النسخة الاحتياطية');
-  };
-
-  const importData = (file) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const imported = JSON.parse(e.target.result);
-        if (!imported.orders || !imported.products) throw new Error('ملف غير صحيح');
-        if (!window.confirm('هذا راح يستبدل جميع بياناتك الحالية. متأكد؟')) return;
-        setData({ ...DEFAULT_DATA, ...imported, settings: { ...DEFAULT_DATA.settings, ...(imported.settings || {}) } });
-        showToast('تم استيراد البيانات بنجاح');
-      } catch (err) {
-        alert('خطأ في قراءة الملف: ' + err.message);
-      }
-    };
-    reader.readAsText(file);
+  const saveSettings = async (newSettings) => {
+    try {
+      const { error } = await supabase.from('settings').update({
+        shop_name: newSettings.shopName,
+        shop_phone: newSettings.shopPhone,
+        default_delivery_fee: newSettings.defaultDeliveryFee
+      }).eq('id', 1);
+      if (error) throw error;
+      setSettings(newSettings);
+      showToast('تم حفظ الإعدادات');
+    } catch (err) {
+      showToast('خطأ: ' + err.message, 'error');
+    }
   };
 
   if (!loaded) return null;
+
+  // Connection error
+  if (connError) {
+    return (
+      <div dir="rtl" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backgroundColor: '#f6f2eb' }}>
+        <div style={{ maxWidth: '480px', backgroundColor: '#ffffff', borderRadius: '16px', padding: '32px', textAlign: 'center', border: '1px solid #fecaca' }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <AlertTriangle size={28} color="#b91c1c" />
+          </div>
+          <h2 className="font-display" style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 600 }}>ما قدرنا نوصل للسحابة</h2>
+          <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#6b6558', lineHeight: 1.6 }}>{connError}</p>
+          <button onClick={loadData} style={primaryBtn}>حاول مرة ثانية</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div dir="rtl" style={{ minHeight: '100vh', backgroundColor: '#f6f2eb' }}>
@@ -264,7 +368,7 @@ function OrderManagementApp() {
               <Store size={20} color="#ffffff" strokeWidth={2} />
             </div>
             <div>
-              <h1 className="font-display" style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1f1b12' }}>{data.settings.shopName || 'متجري'}</h1>
+              <h1 className="font-display" style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1f1b12' }}>{settings.shopName || 'متجري'}</h1>
               <p style={{ margin: 0, fontSize: '12px', color: '#8a7e66' }}>لوحة إدارة الطلبات</p>
             </div>
           </div>
@@ -295,20 +399,24 @@ function OrderManagementApp() {
       </nav>
 
       <main className="no-print" style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 16px' }}>
-        {view === 'dashboard' && <DashboardView data={data} onViewOrder={setViewingOrder} onNewOrder={() => { setEditingOrder(null); setShowOrderForm(true); }} onGoToOrders={() => setView('orders')} />}
-        {view === 'orders' && <OrdersView orders={data.orders} onView={setViewingOrder} onEdit={(o) => { setEditingOrder(o); setShowOrderForm(true); }} onStatusChange={updateOrderStatus} onPrint={setPrintOrder} onNewOrder={() => { setEditingOrder(null); setShowOrderForm(true); }} />}
-        {view === 'products' && <ProductsView products={data.products} onAdd={() => { setEditingProduct(null); setShowProductForm(true); }} onEdit={(p) => { setEditingProduct(p); setShowProductForm(true); }} onDelete={deleteProduct} />}
-        {view === 'settings' && <SettingsView settings={data.settings} onSave={saveSettings} onExport={exportData} onImport={importData} />}
+        {view === 'dashboard' && <DashboardView orders={orders} onViewOrder={setViewingOrder} onNewOrder={() => { setEditingOrder(null); setShowOrderForm(true); }} onGoToOrders={() => setView('orders')} />}
+        {view === 'orders' && <OrdersView orders={orders} onView={setViewingOrder} onEdit={(o) => { setEditingOrder(o); setShowOrderForm(true); }} onStatusChange={updateOrderStatus} onPrint={setPrintOrder} onNewOrder={() => { setEditingOrder(null); setShowOrderForm(true); }} />}
+        {view === 'products' && <ProductsView products={products} onAdd={() => { setEditingProduct(null); setShowProductForm(true); }} onEdit={(p) => { setEditingProduct(p); setShowProductForm(true); }} onDelete={deleteProduct} />}
+        {view === 'settings' && <SettingsView settings={settings} onSave={saveSettings} />}
       </main>
 
-      {showOrderForm && <OrderFormModal order={editingOrder} products={data.products} defaultDeliveryFee={data.settings.defaultDeliveryFee} onSave={saveOrder} onClose={() => { setShowOrderForm(false); setEditingOrder(null); }} />}
+      {showOrderForm && <OrderFormModal order={editingOrder} products={products} defaultDeliveryFee={settings.defaultDeliveryFee} onSave={saveOrder} onClose={() => { setShowOrderForm(false); setEditingOrder(null); }} />}
       {viewingOrder && <OrderDetailModal order={viewingOrder} onClose={() => setViewingOrder(null)} onEdit={() => { setEditingOrder(viewingOrder); setViewingOrder(null); setShowOrderForm(true); }} onDelete={() => deleteOrder(viewingOrder.id)} onStatusChange={(s) => { updateOrderStatus(viewingOrder.id, s); setViewingOrder({ ...viewingOrder, status: s }); }} onPrint={() => { setPrintOrder(viewingOrder); setViewingOrder(null); }} />}
       {showProductForm && <ProductFormModal product={editingProduct} onSave={saveProduct} onClose={() => { setShowProductForm(false); setEditingProduct(null); }} />}
-      {printOrder && <InvoicePrintView order={printOrder} settings={data.settings} onClose={() => setPrintOrder(null)} />}
+      {printOrder && <InvoicePrintView order={printOrder} settings={settings} onClose={() => setPrintOrder(null)} />}
+
+      <div className="cloud-badge no-print">
+        <Cloud size={12} /> متصل بالسحابة
+      </div>
 
       {toast && (
-        <div className="animate-slide-up" style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', backgroundColor: toast.type === 'error' ? '#b91c1c' : '#0f5e52', color: '#ffffff', padding: '12px 20px', borderRadius: '10px', fontSize: '14px', fontWeight: 500, zIndex: 100, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Check size={16} /> {toast.msg}
+        <div className="animate-slide-up" style={{ position: 'fixed', bottom: '60px', left: '50%', transform: 'translateX(-50%)', backgroundColor: toast.type === 'error' ? '#b91c1c' : '#0f5e52', color: '#ffffff', padding: '12px 20px', borderRadius: '10px', fontSize: '14px', fontWeight: 500, zIndex: 100, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {toast.type === 'error' ? <AlertTriangle size={16} /> : <Check size={16} />} {toast.msg}
         </div>
       )}
     </div>
@@ -316,16 +424,16 @@ function OrderManagementApp() {
 }
 
 // ==================== DASHBOARD ====================
-function DashboardView({ data, onViewOrder, onNewOrder, onGoToOrders }) {
+function DashboardView({ orders, onViewOrder, onNewOrder, onGoToOrders }) {
   const stats = useMemo(() => {
-    const newOrders = data.orders.filter(o => o.status === 'new').length;
-    const preparing = data.orders.filter(o => o.status === 'preparing').length;
-    const deliveredToday = data.orders.filter(o => o.status === 'delivered' && isToday(o.updatedAt)).length;
-    const revenueToday = data.orders.filter(o => o.status === 'delivered' && isToday(o.updatedAt)).reduce((s, o) => s + (o.total || 0), 0);
+    const newOrders = orders.filter(o => o.status === 'new').length;
+    const preparing = orders.filter(o => o.status === 'preparing').length;
+    const deliveredToday = orders.filter(o => o.status === 'delivered' && isToday(o.updatedAt)).length;
+    const revenueToday = orders.filter(o => o.status === 'delivered' && isToday(o.updatedAt)).reduce((s, o) => s + (o.total || 0), 0);
     return { newOrders, preparing, deliveredToday, revenueToday };
-  }, [data.orders]);
+  }, [orders]);
 
-  const recentOrders = data.orders.slice(0, 5);
+  const recentOrders = orders.slice(0, 5);
 
   return (
     <div className="animate-fade-in">
@@ -339,7 +447,7 @@ function DashboardView({ data, onViewOrder, onNewOrder, onGoToOrders }) {
       <div style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px', overflow: 'hidden' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid #e8e2d4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 className="font-display" style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>آخر الطلبات</h3>
-          {data.orders.length > 5 && <button onClick={onGoToOrders} style={{ background: 'none', border: 'none', color: '#0f5e52', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>عرض الكل</button>}
+          {orders.length > 5 && <button onClick={onGoToOrders} style={{ background: 'none', border: 'none', color: '#0f5e52', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>عرض الكل</button>}
         </div>
         {recentOrders.length === 0 ? (
           <EmptyState icon={<ShoppingBag size={32} color="#bdb29a" />} title="ما فيه طلبات بعد" description="أضف أول طلب ويرا بياناتك هني" action={<button onClick={onNewOrder} style={primaryBtn}>إضافة طلب</button>} />
@@ -513,9 +621,8 @@ function ProductsView({ products, onAdd, onEdit, onDelete }) {
 }
 
 // ==================== SETTINGS ====================
-function SettingsView({ settings, onSave, onExport, onImport }) {
+function SettingsView({ settings, onSave }) {
   const [form, setForm] = useState(settings);
-  const fileInputRef = React.useRef();
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '640px' }}>
@@ -533,17 +640,15 @@ function SettingsView({ settings, onSave, onExport, onImport }) {
         <button onClick={() => onSave(form)} style={{ ...primaryBtn, alignSelf: 'flex-start' }}>حفظ الإعدادات</button>
       </div>
 
-      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px', padding: '20px' }}>
-        <h3 className="font-display" style={{ margin: '0 0 6px', fontSize: '15px', fontWeight: 600 }}>النسخ الاحتياطي</h3>
-        <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#6b6558', lineHeight: 1.6 }}>
-          البيانات تنحفظ على هالجهاز بس. صدّر نسخة احتياطية بين فترة وفترة، أو إذا بتستخدم النظام على جهاز ثاني.
-        </p>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button onClick={onExport} style={secondaryBtn}><Download size={14} /> تصدير نسخة احتياطية</button>
-          <input type="file" ref={fileInputRef} accept="application/json" style={{ display: 'none' }} onChange={(e) => {
-            if (e.target.files[0]) { onImport(e.target.files[0]); e.target.value = ''; }
-          }} />
-          <button onClick={() => fileInputRef.current?.click()} style={secondaryBtn}><Upload size={14} /> استيراد من ملف</button>
+      <div style={{ backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '14px', padding: '16px 20px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+          <Cloud size={18} color="#047857" style={{ flexShrink: 0, marginTop: '2px' }} />
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: '#047857', marginBottom: '4px' }}>البيانات محفوظة بالسحابة</div>
+            <div style={{ fontSize: '12px', color: '#065f46', lineHeight: 1.6 }}>
+              كل طلباتك ومنتجاتك محفوظة على Supabase. تقدر تفتح النظام من أي جهاز وتلقى نفس البيانات.
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -559,6 +664,7 @@ function OrderFormModal({ order, products, defaultDeliveryFee, onSave, onClose }
     paymentMethod: 'cash', source: 'whatsapp', notes: '', status: 'new'
   });
   const [productPickerOpen, setProductPickerOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const subtotal = useMemo(() => form.items.reduce((s, i) => s + (i.price * i.quantity), 0), [form.items]);
   const total = subtotal + (parseFloat(form.deliveryFee) || 0);
 
@@ -578,10 +684,12 @@ function OrderFormModal({ order, products, defaultDeliveryFee, onSave, onClose }
 
   const removeItem = (idx) => setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.customerName.trim()) { alert('الرجاء إدخال اسم الزبون'); return; }
     if (form.items.length === 0) { alert('الرجاء إضافة منتج واحد على الأقل'); return; }
-    onSave({ ...form, subtotal, total });
+    setSaving(true);
+    await onSave({ ...form, subtotal, total });
+    setSaving(false);
   };
 
   return (
@@ -682,8 +790,8 @@ function OrderFormModal({ order, products, defaultDeliveryFee, onSave, onClose }
         </Section>
 
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid #e8e2d4' }}>
-          <button onClick={onClose} style={secondaryBtn}>إلغاء</button>
-          <button onClick={handleSave} style={primaryBtn}><Check size={16} /> {order ? 'حفظ التعديلات' : 'حفظ الطلب'}</button>
+          <button onClick={onClose} disabled={saving} style={secondaryBtn}>إلغاء</button>
+          <button onClick={handleSave} disabled={saving} style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }}><Check size={16} /> {saving ? 'جاري الحفظ...' : (order ? 'حفظ التعديلات' : 'حفظ الطلب')}</button>
         </div>
       </div>
       {productPickerOpen && <ProductPickerModal products={products} onPick={addItem} onClose={() => setProductPickerOpen(false)} />}
@@ -823,9 +931,12 @@ function OrderDetailModal({ order, onClose, onEdit, onDelete, onStatusChange, on
 // ==================== PRODUCT FORM ====================
 function ProductFormModal({ product, onSave, onClose }) {
   const [form, setForm] = useState(product || { name: '', price: 0 });
-  const handleSave = () => {
+  const [saving, setSaving] = useState(false);
+  const handleSave = async () => {
     if (!form.name.trim()) { alert('اكتب اسم المنتج'); return; }
-    onSave({ ...form, price: parseFloat(form.price) || 0 });
+    setSaving(true);
+    await onSave({ ...form, price: parseFloat(form.price) || 0 });
+    setSaving(false);
   };
   return (
     <Modal onClose={onClose} title={product ? 'تعديل منتج' : 'منتج جديد'} size="small">
@@ -833,8 +944,8 @@ function ProductFormModal({ product, onSave, onClose }) {
         <Field label="اسم المنتج *"><input type="text" autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} placeholder="مثلاً: قميص قطن" /></Field>
         <Field label="السعر (د.ك) *"><input type="number" step="0.001" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} style={inputStyle} /></Field>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '8px' }}>
-          <button onClick={onClose} style={secondaryBtn}>إلغاء</button>
-          <button onClick={handleSave} style={primaryBtn}><Check size={16} /> حفظ</button>
+          <button onClick={onClose} disabled={saving} style={secondaryBtn}>إلغاء</button>
+          <button onClick={handleSave} disabled={saving} style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }}><Check size={16} /> {saving ? 'جاري الحفظ...' : 'حفظ'}</button>
         </div>
       </div>
     </Modal>
