@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f5e52">
+<title>نظام إدارة الطلبات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'IBM Plex Sans Arabic', sans-serif; background: #f6f2eb; color: #1f1b12; }
+  .font-display { font-family: 'Readex Pro', sans-serif; letter-spacing: -0.01em; }
+  input, textarea, select, button { font-family: inherit; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: #0f5e52 !important; }
+  .num { font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-slide-up { animation: slideUp 0.2s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .animate-fade-in { animation: fadeIn 0.15s ease-out; }
+
+  #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #f6f2eb; z-index: 9999; flex-direction: column; gap: 16px; }
+  #loading.hidden { display: none; }
+  .spinner { width: 32px; height: 32px; border: 3px solid #e8e2d4; border-top-color: #0f5e52; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media print {
+    body * { visibility: hidden; }
+    .print-area, .print-area * { visibility: visible; }
+    .print-area { position: absolute; right: 0; left: 0; top: 0; width: 100%; padding: 20px; }
+    .no-print { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="loading">
+  <div class="spinner"></div>
+  <div style="font-size: 14px; color: #6b6558;">جاري التحميل...</div>
+</div>
+<div id="root"></div>
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+// ==================== ICONS ====================
+const SvgIcon = ({ size = 16, color = 'currentColor', strokeWidth = 2, style, children }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+    strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style}>
+    {children}
+  </svg>
+);
+const Plus = (p) => <SvgIcon {...p}><path d="M5 12h14"/><path d="M12 5v14"/></SvgIcon>;
+const Trash2 = (p) => <SvgIcon {...p}><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></SvgIcon>;
+const Pencil = (p) => <SvgIcon {...p}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></SvgIcon>;
+const Search = (p) => <SvgIcon {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></SvgIcon>;
+const MapPin = (p) => <SvgIcon {...p}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></SvgIcon>;
+const Package = (p) => <SvgIcon {...p}><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></SvgIcon>;
+const ShoppingBag = (p) => <SvgIcon {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></SvgIcon>;
+const Clock = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></SvgIcon>;
+const CheckCircle2 = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></SvgIcon>;
+const Printer = (p) => <SvgIcon {...p}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></SvgIcon>;
+const SettingsIcon = (p) => <SvgIcon {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></SvgIcon>;
+const LayoutDashboard = (p) => <SvgIcon {...p}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></SvgIcon>;
+const X = (p) => <SvgIcon {...p}><path d="M18 6 6 18"/><path d="M6 6l12 12"/></SvgIcon>;
+const FileText = (p) => <SvgIcon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></SvgIcon>;
+const Receipt = (p) => <SvgIcon {...p}><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></SvgIcon>;
+const MessageCircle = (p) => <SvgIcon {...p}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></SvgIcon>;
+const Instagram = (p) => <SvgIcon {...p}><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></SvgIcon>;
+const PhoneCall = (p) => <SvgIcon {...p}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></SvgIcon>;
+const HandCoins = (p) => <SvgIcon {...p}><path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17"/><path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9"/><path d="m2 16 6 6"/><circle cx="16" cy="9" r="2.9"/><circle cx="6" cy="5" r="3"/></SvgIcon>;
+const CreditCard = (p) => <SvgIcon {...p}><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></SvgIcon>;
+const Building2 = (p) => <SvgIcon {...p}><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/></SvgIcon>;
+const ChevronDown = (p) => <SvgIcon {...p}><path d="m6 9 6 6 6-6"/></SvgIcon>;
+const Check = (p) => <SvgIcon {...p}><path d="M20 6 9 17l-5-5"/></SvgIcon>;
+const Store = (p) => <SvgIcon {...p}><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M2 7h20"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/></SvgIcon>;
+const Download = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></SvgIcon>;
+const Upload = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></SvgIcon>;
+
+// ==================== CONSTANTS ====================
+const STORAGE_KEY = 'kw-order-mgmt-v1';
+
+const DEFAULT_DATA = {
+  orders: [],
+  products: [],
+  settings: { shopName: 'متجري', shopPhone: '', defaultDeliveryFee: 1.000 },
+  nextOrderNumber: 1001
+};
+
+const STATUSES = {
+  new: { label: 'جديد', bg: '#eff6ff', fg: '#1d4ed8', border: '#bfdbfe', dot: '#3b82f6' },
+  preparing: { label: 'قيد التجهيز', bg: '#fffbeb', fg: '#b45309', border: '#fde68a', dot: '#f59e0b' },
+  delivered: { label: 'تم التوصيل', bg: '#ecfdf5', fg: '#047857', border: '#a7f3d0', dot: '#10b981' },
+  cancelled: { label: 'ملغي', bg: '#fef2f2', fg: '#b91c1c', border: '#fecaca', dot: '#ef4444' }
+};
+
+const SOURCES = {
+  whatsapp: { label: 'واتساب', Icon: MessageCircle },
+  instagram: { label: 'انستقرام', Icon: Instagram },
+  phone: { label: 'اتصال', Icon: PhoneCall },
+  other: { label: 'غير ذلك', Icon: ShoppingBag }
+};
+
+const PAYMENTS = {
+  cash: { label: 'كاش', Icon: HandCoins },
+  knet: { label: 'كي نت', Icon: CreditCard },
+  transfer: { label: 'تحويل بنكي', Icon: Building2 }
+};
+
+// ==================== HELPERS ====================
+const fmt = (n) => Number(n || 0).toFixed(3);
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+const formatDate = (ts) => {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} - ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+};
+
+const formatDateShort = (ts) => {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+};
+
+const isToday = (ts) => {
+  if (!ts) return false;
+  const d = new Date(ts);
+  const now = new Date();
+  return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+};
+
+// ==================== MAIN APP ====================
+function OrderManagementApp() {
+  const [data, setData] = useState(DEFAULT_DATA);
+  const [loaded, setLoaded] = useState(false);
+  const [view, setView] = useState('dashboard');
+  const [editingOrder, setEditingOrder] = useState(null);
+  const [viewingOrder, setViewingOrder] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [showOrderForm, setShowOrderForm] = useState(false);
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [printOrder, setPrintOrder] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setData({ ...DEFAULT_DATA, ...parsed, settings: { ...DEFAULT_DATA.settings, ...(parsed.settings || {}) } });
+      }
+    } catch (e) { console.error('Load failed', e); }
+    setLoaded(true);
+    const el = document.getElementById('loading');
+    if (el) el.classList.add('hidden');
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) { console.error('Save failed', e); }
+  }, [data, loaded]);
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const saveOrder = (order) => {
+    setData(prev => {
+      const now = Date.now();
+      if (order.id) {
+        return { ...prev, orders: prev.orders.map(o => o.id === order.id ? { ...order, updatedAt: now } : o) };
+      } else {
+        const newOrder = { ...order, id: uid(), orderNumber: prev.nextOrderNumber, createdAt: now, updatedAt: now };
+        return { ...prev, orders: [newOrder, ...prev.orders], nextOrderNumber: prev.nextOrderNumber + 1 };
+      }
+    });
+    setShowOrderForm(false);
+    setEditingOrder(null);
+    showToast(order.id ? 'تم تحديث الطلب' : 'تم إضافة الطلب');
+  };
+
+  const deleteOrder = (id) => {
+    if (!window.confirm('تبي تحذف الطلب؟ ما راح نقدر نرجعه.')) return;
+    setData(prev => ({ ...prev, orders: prev.orders.filter(o => o.id !== id) }));
+    setViewingOrder(null);
+    showToast('تم حذف الطلب');
+  };
+
+  const updateOrderStatus = (id, status) => {
+    setData(prev => ({ ...prev, orders: prev.orders.map(o => o.id === id ? { ...o, status, updatedAt: Date.now() } : o) }));
+  };
+
+  const saveProduct = (product) => {
+    setData(prev => {
+      if (product.id) {
+        return { ...prev, products: prev.products.map(p => p.id === product.id ? product : p) };
+      } else {
+        return { ...prev, products: [...prev.products, { ...product, id: uid(), createdAt: Date.now() }] };
+      }
+    });
+    setShowProductForm(false);
+    setEditingProduct(null);
+    showToast(product.id ? 'تم تحديث المنتج' : 'تم إضافة المنتج');
+  };
+
+  const deleteProduct = (id) => {
+    if (!window.confirm('تبي تحذف المنتج؟')) return;
+    setData(prev => ({ ...prev, products: prev.products.filter(p => p.id !== id) }));
+    showToast('تم حذف المنتج');
+  };
+
+  const saveSettings = (settings) => {
+    setData(prev => ({ ...prev, settings }));
+    showToast('تم حفظ الإعدادات');
+  };
+
+  const exportData = () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const d = new Date();
+    a.download = `orders-backup-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('تم تصدير النسخة الاحتياطية');
+  };
+
+  const importData = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (!imported.orders || !imported.products) throw new Error('ملف غير صحيح');
+        if (!window.confirm('هذا راح يستبدل جميع بياناتك الحالية. متأكد؟')) return;
+        setData({ ...DEFAULT_DATA, ...imported, settings: { ...DEFAULT_DATA.settings, ...(imported.settings || {}) } });
+        showToast('تم استيراد البيانات بنجاح');
+      } catch (err) {
+        alert('خطأ في قراءة الملف: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  if (!loaded) return null;
+
+  return (
+    <div dir="rtl" style={{ minHeight: '100vh', backgroundColor: '#f6f2eb' }}>
+      <header className="no-print" style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e8e2d4' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#0f5e52', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Store size={20} color="#ffffff" strokeWidth={2} />
+            </div>
+            <div>
+              <h1 className="font-display" style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1f1b12' }}>{data.settings.shopName || 'متجري'}</h1>
+              <p style={{ margin: 0, fontSize: '12px', color: '#8a7e66' }}>لوحة إدارة الطلبات</p>
+            </div>
+          </div>
+          <button onClick={() => { setEditingOrder(null); setShowOrderForm(true); }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#0f5e52', color: '#ffffff', border: 'none', padding: '10px 18px', borderRadius: '10px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+            <Plus size={16} /> طلب جديد
+          </button>
+        </div>
+      </header>
+
+      <nav className="no-print" style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e8e2d4', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div className="hide-scrollbar" style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', gap: '4px', padding: '0 16px', overflowX: 'auto' }}>
+          {[
+            { id: 'dashboard', label: 'لوحة التحكم', Icon: LayoutDashboard },
+            { id: 'orders', label: 'الطلبات', Icon: ShoppingBag },
+            { id: 'products', label: 'المنتجات', Icon: Package },
+            { id: 'settings', label: 'الإعدادات', Icon: SettingsIcon }
+          ].map(t => {
+            const active = view === t.id;
+            return (
+              <button key={t.id} onClick={() => setView(t.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '14px 18px', backgroundColor: 'transparent', border: 'none', borderBottom: active ? '2px solid #0f5e52' : '2px solid transparent', color: active ? '#0f5e52' : '#6b6558', fontWeight: active ? 600 : 500, fontSize: '14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                <t.Icon size={16} /> {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      <main className="no-print" style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 16px' }}>
+        {view === 'dashboard' && <DashboardView data={data} onViewOrder={setViewingOrder} onNewOrder={() => { setEditingOrder(null); setShowOrderForm(true); }} onGoToOrders={() => setView('orders')} />}
+        {view === 'orders' && <OrdersView orders={data.orders} onView={setViewingOrder} onEdit={(o) => { setEditingOrder(o); setShowOrderForm(true); }} onStatusChange={updateOrderStatus} onPrint={setPrintOrder} onNewOrder={() => { setEditingOrder(null); setShowOrderForm(true); }} />}
+        {view === 'products' && <ProductsView products={data.products} onAdd={() => { setEditingProduct(null); setShowProductForm(true); }} onEdit={(p) => { setEditingProduct(p); setShowProductForm(true); }} onDelete={deleteProduct} />}
+        {view === 'settings' && <SettingsView settings={data.settings} onSave={saveSettings} onExport={exportData} onImport={importData} />}
+      </main>
+
+      {showOrderForm && <OrderFormModal order={editingOrder} products={data.products} defaultDeliveryFee={data.settings.defaultDeliveryFee} onSave={saveOrder} onClose={() => { setShowOrderForm(false); setEditingOrder(null); }} />}
+      {viewingOrder && <OrderDetailModal order={viewingOrder} onClose={() => setViewingOrder(null)} onEdit={() => { setEditingOrder(viewingOrder); setViewingOrder(null); setShowOrderForm(true); }} onDelete={() => deleteOrder(viewingOrder.id)} onStatusChange={(s) => { updateOrderStatus(viewingOrder.id, s); setViewingOrder({ ...viewingOrder, status: s }); }} onPrint={() => { setPrintOrder(viewingOrder); setViewingOrder(null); }} />}
+      {showProductForm && <ProductFormModal product={editingProduct} onSave={saveProduct} onClose={() => { setShowProductForm(false); setEditingProduct(null); }} />}
+      {printOrder && <InvoicePrintView order={printOrder} settings={data.settings} onClose={() => setPrintOrder(null)} />}
+
+      {toast && (
+        <div className="animate-slide-up" style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', backgroundColor: toast.type === 'error' ? '#b91c1c' : '#0f5e52', color: '#ffffff', padding: '12px 20px', borderRadius: '10px', fontSize: '14px', fontWeight: 500, zIndex: 100, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Check size={16} /> {toast.msg}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== DASHBOARD ====================
+function DashboardView({ data, onViewOrder, onNewOrder, onGoToOrders }) {
+  const stats = useMemo(() => {
+    const newOrders = data.orders.filter(o => o.status === 'new').length;
+    const preparing = data.orders.filter(o => o.status === 'preparing').length;
+    const deliveredToday = data.orders.filter(o => o.status === 'delivered' && isToday(o.updatedAt)).length;
+    const revenueToday = data.orders.filter(o => o.status === 'delivered' && isToday(o.updatedAt)).reduce((s, o) => s + (o.total || 0), 0);
+    return { newOrders, preparing, deliveredToday, revenueToday };
+  }, [data.orders]);
+
+  const recentOrders = data.orders.slice(0, 5);
+
+  return (
+    <div className="animate-fade-in">
+      <h2 className="font-display" style={{ margin: '0 0 20px', fontSize: '22px', fontWeight: 600 }}>لوحة التحكم</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '28px' }}>
+        <StatCard label="طلبات جديدة" value={stats.newOrders} color="#3b82f6" Icon={Clock} />
+        <StatCard label="قيد التجهيز" value={stats.preparing} color="#f59e0b" Icon={Package} />
+        <StatCard label="تم التوصيل اليوم" value={stats.deliveredToday} color="#10b981" Icon={CheckCircle2} />
+        <StatCard label="إيرادات اليوم" value={fmt(stats.revenueToday)} suffix="د.ك" color="#0f5e52" Icon={Receipt} />
+      </div>
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e8e2d4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 className="font-display" style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>آخر الطلبات</h3>
+          {data.orders.length > 5 && <button onClick={onGoToOrders} style={{ background: 'none', border: 'none', color: '#0f5e52', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>عرض الكل</button>}
+        </div>
+        {recentOrders.length === 0 ? (
+          <EmptyState icon={<ShoppingBag size={32} color="#bdb29a" />} title="ما فيه طلبات بعد" description="أضف أول طلب ويرا بياناتك هني" action={<button onClick={onNewOrder} style={primaryBtn}>إضافة طلب</button>} />
+        ) : (
+          <div>{recentOrders.map(o => <OrderRow key={o.id} order={o} onClick={() => onViewOrder(o)} />)}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, suffix, color, Icon }) {
+  return (
+    <div style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px', padding: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <span style={{ fontSize: '13px', color: '#6b6558', fontWeight: 500 }}>{label}</span>
+        <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={16} color={color} />
+        </div>
+      </div>
+      <div className="num font-display" style={{ fontSize: '26px', fontWeight: 600, color: '#1f1b12', lineHeight: 1 }}>
+        {value}{suffix && <span style={{ fontSize: '13px', color: '#8a7e66', fontWeight: 500, marginRight: '6px' }}>{suffix}</span>}
+      </div>
+    </div>
+  );
+}
+
+// ==================== ORDERS ====================
+function OrdersView({ orders, onView, onEdit, onStatusChange, onPrint, onNewOrder }) {
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const filtered = useMemo(() => orders.filter(o => {
+    if (statusFilter !== 'all' && o.status !== statusFilter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return String(o.orderNumber).includes(q) || (o.customerName || '').toLowerCase().includes(q) || (o.customerPhone || '').includes(q);
+    }
+    return true;
+  }), [orders, search, statusFilter]);
+
+  return (
+    <div className="animate-fade-in">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+        <h2 className="font-display" style={{ margin: 0, fontSize: '22px', fontWeight: 600 }}>
+          الطلبات <span style={{ color: '#8a7e66', fontSize: '16px', fontWeight: 500 }}>({orders.length})</span>
+        </h2>
+      </div>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: '1 1 240px', minWidth: '200px' }}>
+          <Search size={16} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#8a7e66' }} />
+          <input type="text" placeholder="بحث برقم الطلب / اسم / رقم التلفون" value={search} onChange={(e) => setSearch(e.target.value)}
+            style={{ width: '100%', padding: '10px 40px 10px 14px', border: '1px solid #e8e2d4', borderRadius: '10px', backgroundColor: '#ffffff', fontSize: '14px' }} />
+        </div>
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          {[{ val: 'all', label: 'الكل' }, ...Object.entries(STATUSES).map(([k, v]) => ({ val: k, label: v.label }))].map(f => {
+            const active = statusFilter === f.val;
+            return (
+              <button key={f.val} onClick={() => setStatusFilter(f.val)}
+                style={{ padding: '10px 14px', fontSize: '13px', fontWeight: 500, border: '1px solid ' + (active ? '#0f5e52' : '#e8e2d4'), backgroundColor: active ? '#0f5e52' : '#ffffff', color: active ? '#ffffff' : '#4a4438', borderRadius: '10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px', overflow: 'hidden' }}>
+        {filtered.length === 0 ? (
+          <EmptyState icon={<ShoppingBag size={32} color="#bdb29a" />} title={orders.length === 0 ? 'ما فيه طلبات بعد' : 'ما فيه نتائج'} description={orders.length === 0 ? 'أضف أول طلب' : 'جرب تغير البحث أو الفلتر'} action={orders.length === 0 && <button onClick={onNewOrder} style={primaryBtn}>إضافة طلب</button>} />
+        ) : (
+          filtered.map(o => <OrderRow key={o.id} order={o} onClick={() => onView(o)} showActions onEdit={() => onEdit(o)} onPrint={() => onPrint(o)} onStatusChange={(s) => onStatusChange(o.id, s)} />)
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OrderRow({ order, onClick, showActions, onEdit, onPrint, onStatusChange }) {
+  const status = STATUSES[order.status] || STATUSES.new;
+  const source = SOURCES[order.source] || SOURCES.other;
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <div style={{ borderBottom: '1px solid #f0ece2', padding: '14px 20px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: 'background 0.15s' }}
+      onClick={onClick}
+      onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#faf7f0'}
+      onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+      <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: '#f6f2eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <source.Icon size={18} color="#6b6558" />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+          <span className="num font-display" style={{ fontWeight: 600, fontSize: '15px' }}>#{order.orderNumber}</span>
+          <span style={{ fontSize: '14px' }}>{order.customerName}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '999px', backgroundColor: status.bg, color: status.fg, border: '1px solid ' + status.border }}>
+            <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: status.dot }}></span>{status.label}
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', color: '#8a7e66', flexWrap: 'wrap' }}>
+          <span>{formatDateShort(order.createdAt)}</span>
+          {order.customerPhone && <span>{order.customerPhone}</span>}
+          <span className="num" style={{ color: '#0f5e52', fontWeight: 600 }}>{fmt(order.total)} د.ك</span>
+        </div>
+      </div>
+      {showActions && (
+        <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+          <button onClick={() => setMenuOpen(!menuOpen)}
+            style={{ padding: '8px', border: '1px solid #e8e2d4', borderRadius: '8px', backgroundColor: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <ChevronDown size={14} />
+          </button>
+          {menuOpen && (
+            <React.Fragment>
+              <div style={{ position: 'fixed', inset: 0, zIndex: 20 }} onClick={() => setMenuOpen(false)}></div>
+              <div className="animate-slide-up" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.08)', minWidth: '180px', zIndex: 30, overflow: 'hidden' }}>
+                <div style={{ padding: '8px 0', borderBottom: '1px solid #f0ece2' }}>
+                  {Object.entries(STATUSES).map(([k, v]) => (
+                    <button key={k} onClick={() => { onStatusChange(k); setMenuOpen(false); }} style={menuItem}>
+                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: v.dot }}></span>{v.label}
+                      {order.status === k && <Check size={14} color="#0f5e52" style={{ marginRight: 'auto' }} />}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => { onEdit(); setMenuOpen(false); }} style={menuItem}><Pencil size={14} color="#6b6558" /> تعديل</button>
+                <button onClick={() => { onPrint(); setMenuOpen(false); }} style={menuItem}><Printer size={14} color="#6b6558" /> طباعة الفاتورة</button>
+              </div>
+            </React.Fragment>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== PRODUCTS ====================
+function ProductsView({ products, onAdd, onEdit, onDelete }) {
+  return (
+    <div className="animate-fade-in">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+        <h2 className="font-display" style={{ margin: 0, fontSize: '22px', fontWeight: 600 }}>
+          المنتجات <span style={{ color: '#8a7e66', fontSize: '16px', fontWeight: 500 }}>({products.length})</span>
+        </h2>
+        <button onClick={onAdd} style={primaryBtn}><Plus size={16} /> إضافة منتج</button>
+      </div>
+      {products.length === 0 ? (
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px' }}>
+          <EmptyState icon={<Package size={32} color="#bdb29a" />} title="ما فيه منتجات بعد" description="ضيف منتجاتك عشان تقدر تختار منها في الطلبات" action={<button onClick={onAdd} style={primaryBtn}><Plus size={16} /> إضافة منتج</button>} />
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+          {products.map(p => (
+            <div key={p.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#f6f2eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Package size={18} color="#6b6558" />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                  <div className="num" style={{ fontSize: '14px', color: '#0f5e52', fontWeight: 600 }}>{fmt(p.price)} د.ك</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button onClick={() => onEdit(p)} style={{ ...smallBtn, flex: 1 }}><Pencil size={13} /> تعديل</button>
+                <button onClick={() => onDelete(p.id)} style={{ ...smallBtn, flex: 1, color: '#b91c1c', borderColor: '#fecaca' }}><Trash2 size={13} /> حذف</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== SETTINGS ====================
+function SettingsView({ settings, onSave, onExport, onImport }) {
+  const [form, setForm] = useState(settings);
+  const fileInputRef = React.useRef();
+
+  return (
+    <div className="animate-fade-in" style={{ maxWidth: '640px' }}>
+      <h2 className="font-display" style={{ margin: '0 0 20px', fontSize: '22px', fontWeight: 600 }}>الإعدادات</h2>
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '16px' }}>
+        <Field label="اسم المحل / البراند">
+          <input type="text" value={form.shopName} onChange={(e) => setForm({ ...form, shopName: e.target.value })} style={inputStyle} placeholder="اسم المحل" />
+        </Field>
+        <Field label="رقم التلفون">
+          <input type="tel" value={form.shopPhone} onChange={(e) => setForm({ ...form, shopPhone: e.target.value })} style={inputStyle} placeholder="مثال: 99999999" />
+        </Field>
+        <Field label="سعر التوصيل الافتراضي (د.ك)">
+          <input type="number" step="0.001" value={form.defaultDeliveryFee} onChange={(e) => setForm({ ...form, defaultDeliveryFee: parseFloat(e.target.value) || 0 })} style={inputStyle} />
+        </Field>
+        <button onClick={() => onSave(form)} style={{ ...primaryBtn, alignSelf: 'flex-start' }}>حفظ الإعدادات</button>
+      </div>
+
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px', padding: '20px' }}>
+        <h3 className="font-display" style={{ margin: '0 0 6px', fontSize: '15px', fontWeight: 600 }}>النسخ الاحتياطي</h3>
+        <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#6b6558', lineHeight: 1.6 }}>
+          البيانات تنحفظ على هالجهاز بس. صدّر نسخة احتياطية بين فترة وفترة، أو إذا بتستخدم النظام على جهاز ثاني.
+        </p>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button onClick={onExport} style={secondaryBtn}><Download size={14} /> تصدير نسخة احتياطية</button>
+          <input type="file" ref={fileInputRef} accept="application/json" style={{ display: 'none' }} onChange={(e) => {
+            if (e.target.files[0]) { onImport(e.target.files[0]); e.target.value = ''; }
+          }} />
+          <button onClick={() => fileInputRef.current?.click()} style={secondaryBtn}><Upload size={14} /> استيراد من ملف</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== ORDER FORM ====================
+function OrderFormModal({ order, products, defaultDeliveryFee, onSave, onClose }) {
+  const [form, setForm] = useState(order || {
+    customerName: '', customerPhone: '',
+    address: { area: '', block: '', street: '', avenue: '', house: '', extra: '' },
+    items: [], deliveryFee: defaultDeliveryFee || 0,
+    paymentMethod: 'cash', source: 'whatsapp', notes: '', status: 'new'
+  });
+  const [productPickerOpen, setProductPickerOpen] = useState(false);
+  const subtotal = useMemo(() => form.items.reduce((s, i) => s + (i.price * i.quantity), 0), [form.items]);
+  const total = subtotal + (parseFloat(form.deliveryFee) || 0);
+
+  const addItem = (product) => {
+    setForm(f => {
+      const existing = f.items.find(i => i.productId === product.id);
+      if (existing) return { ...f, items: f.items.map(i => i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i) };
+      return { ...f, items: [...f.items, { productId: product.id, name: product.name, price: product.price, quantity: 1 }] };
+    });
+    setProductPickerOpen(false);
+  };
+
+  const updateItemQty = (idx, qty) => {
+    if (qty <= 0) setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }));
+    else setForm(f => ({ ...f, items: f.items.map((it, i) => i === idx ? { ...it, quantity: qty } : it) }));
+  };
+
+  const removeItem = (idx) => setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }));
+
+  const handleSave = () => {
+    if (!form.customerName.trim()) { alert('الرجاء إدخال اسم الزبون'); return; }
+    if (form.items.length === 0) { alert('الرجاء إضافة منتج واحد على الأقل'); return; }
+    onSave({ ...form, subtotal, total });
+  };
+
+  return (
+    <Modal onClose={onClose} title={order ? `تعديل طلب #${order.orderNumber}` : 'طلب جديد'} size="large">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <Section title="معلومات الزبون">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <Field label="الاسم *"><input type="text" value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} style={inputStyle} placeholder="اسم الزبون" /></Field>
+            <Field label="رقم التلفون"><input type="tel" value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} style={inputStyle} placeholder="999xxxxx" /></Field>
+          </div>
+        </Section>
+
+        <Section title="العنوان">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+            <Field label="المنطقة"><input type="text" value={form.address.area} onChange={(e) => setForm({ ...form, address: { ...form.address, area: e.target.value } })} style={inputStyle} placeholder="مثلاً: السالمية" /></Field>
+            <Field label="قطعة"><input type="text" value={form.address.block} onChange={(e) => setForm({ ...form, address: { ...form.address, block: e.target.value } })} style={inputStyle} /></Field>
+            <Field label="شارع"><input type="text" value={form.address.street} onChange={(e) => setForm({ ...form, address: { ...form.address, street: e.target.value } })} style={inputStyle} /></Field>
+            <Field label="جادة"><input type="text" value={form.address.avenue} onChange={(e) => setForm({ ...form, address: { ...form.address, avenue: e.target.value } })} style={inputStyle} /></Field>
+            <Field label="بيت"><input type="text" value={form.address.house} onChange={(e) => setForm({ ...form, address: { ...form.address, house: e.target.value } })} style={inputStyle} /></Field>
+          </div>
+          <div style={{ marginTop: '12px' }}>
+            <Field label="تفاصيل إضافية"><textarea value={form.address.extra} onChange={(e) => setForm({ ...form, address: { ...form.address, extra: e.target.value } })} style={{ ...inputStyle, resize: 'vertical', minHeight: '60px' }} placeholder="علامة مميزة / طابق / شقة..." /></Field>
+          </div>
+        </Section>
+
+        <Section title="المنتجات" action={<button onClick={() => setProductPickerOpen(true)} style={smallPrimaryBtn}><Plus size={14} /> إضافة منتج</button>}>
+          {form.items.length === 0 ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: '#8a7e66', fontSize: '13px', backgroundColor: '#faf7f0', borderRadius: '10px', border: '1px dashed #e8e2d4' }}>ما فيه منتجات بالطلب. اضغط "إضافة منتج"</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {form.items.map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', backgroundColor: '#faf7f0', borderRadius: '10px', border: '1px solid #e8e2d4' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 500 }}>{item.name}</div>
+                    <div className="num" style={{ fontSize: '12px', color: '#8a7e66' }}>{fmt(item.price)} د.ك</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button onClick={() => updateItemQty(idx, item.quantity - 1)} style={qtyBtn}>−</button>
+                    <span className="num" style={{ minWidth: '24px', textAlign: 'center', fontWeight: 600 }}>{item.quantity}</span>
+                    <button onClick={() => updateItemQty(idx, item.quantity + 1)} style={qtyBtn}>+</button>
+                  </div>
+                  <div className="num" style={{ minWidth: '70px', textAlign: 'left', fontWeight: 600, color: '#0f5e52' }}>{fmt(item.price * item.quantity)}</div>
+                  <button onClick={() => removeItem(idx)} style={{ background: 'none', border: 'none', color: '#b91c1c', cursor: 'pointer', padding: '4px' }}><Trash2 size={14} /></button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+
+        <Section title="الدفع والمصدر">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+            <Field label="طريقة الدفع">
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {Object.entries(PAYMENTS).map(([k, v]) => {
+                  const active = form.paymentMethod === k;
+                  return (
+                    <button key={k} onClick={() => setForm({ ...form, paymentMethod: k })}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', border: '1px solid ' + (active ? '#0f5e52' : '#e8e2d4'), backgroundColor: active ? '#0f5e52' : '#ffffff', color: active ? '#ffffff' : '#4a4438', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                      <v.Icon size={14} /> {v.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+            <Field label="مصدر الطلب">
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {Object.entries(SOURCES).map(([k, v]) => {
+                  const active = form.source === k;
+                  return (
+                    <button key={k} onClick={() => setForm({ ...form, source: k })}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', border: '1px solid ' + (active ? '#0f5e52' : '#e8e2d4'), backgroundColor: active ? '#0f5e52' : '#ffffff', color: active ? '#ffffff' : '#4a4438', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                      <v.Icon size={14} /> {v.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+          </div>
+        </Section>
+
+        <Section title="ملاحظات">
+          <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} style={{ ...inputStyle, resize: 'vertical', minHeight: '60px' }} placeholder="أي ملاحظة إضافية..." />
+        </Section>
+
+        <Section title="الحساب">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+              <span>المجموع الفرعي</span><span className="num" style={{ fontWeight: 600 }}>{fmt(subtotal)} د.ك</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', fontSize: '14px' }}>
+              <span>التوصيل</span>
+              <input type="number" step="0.001" value={form.deliveryFee} onChange={(e) => setForm({ ...form, deliveryFee: parseFloat(e.target.value) || 0 })} className="num" style={{ ...inputStyle, width: '120px', textAlign: 'left' }} />
+            </div>
+            <div style={{ borderTop: '1px solid #e8e2d4', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 700 }}>
+              <span>الإجمالي</span><span className="num" style={{ color: '#0f5e52' }}>{fmt(total)} د.ك</span>
+            </div>
+          </div>
+        </Section>
+
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid #e8e2d4' }}>
+          <button onClick={onClose} style={secondaryBtn}>إلغاء</button>
+          <button onClick={handleSave} style={primaryBtn}><Check size={16} /> {order ? 'حفظ التعديلات' : 'حفظ الطلب'}</button>
+        </div>
+      </div>
+      {productPickerOpen && <ProductPickerModal products={products} onPick={addItem} onClose={() => setProductPickerOpen(false)} />}
+    </Modal>
+  );
+}
+
+function ProductPickerModal({ products, onPick, onClose }) {
+  const [q, setQ] = useState('');
+  const filtered = products.filter(p => p.name.toLowerCase().includes(q.toLowerCase()));
+
+  return (
+    <Modal onClose={onClose} title="اختيار منتج" size="small">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ position: 'relative' }}>
+          <Search size={16} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#8a7e66' }} />
+          <input type="text" autoFocus placeholder="ابحث عن منتج..." value={q} onChange={(e) => setQ(e.target.value)} style={{ ...inputStyle, paddingRight: '40px' }} />
+        </div>
+        <div style={{ maxHeight: '360px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {products.length === 0 ? (
+            <div style={{ padding: '20px', textAlign: 'center', color: '#8a7e66', fontSize: '13px' }}>ما فيه منتجات. ضيف منتجات من تبويب "المنتجات" أول</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ padding: '20px', textAlign: 'center', color: '#8a7e66', fontSize: '13px' }}>ما فيه نتائج</div>
+          ) : filtered.map(p => (
+            <button key={p.id} onClick={() => onPick(p)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', border: '1px solid #e8e2d4', borderRadius: '10px', backgroundColor: '#ffffff', cursor: 'pointer', textAlign: 'right', width: '100%' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#f6f2eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Package size={16} color="#6b6558" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 500, fontSize: '14px' }}>{p.name}</div>
+                <div className="num" style={{ fontSize: '12px', color: '#0f5e52', fontWeight: 600 }}>{fmt(p.price)} د.ك</div>
+              </div>
+              <Plus size={16} color="#0f5e52" />
+            </button>
+          ))}
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ==================== ORDER DETAIL ====================
+function OrderDetailModal({ order, onClose, onEdit, onDelete, onStatusChange, onPrint }) {
+  const source = SOURCES[order.source] || SOURCES.other;
+  const payment = PAYMENTS[order.paymentMethod] || PAYMENTS.cash;
+
+  const addressStr = [
+    order.address?.area, order.address?.block && `قطعة ${order.address.block}`,
+    order.address?.street && `شارع ${order.address.street}`, order.address?.avenue && `جادة ${order.address.avenue}`,
+    order.address?.house && `بيت ${order.address.house}`
+  ].filter(Boolean).join('، ');
+
+  return (
+    <Modal onClose={onClose} title={`طلب #${order.orderNumber}`} size="medium">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          {Object.entries(STATUSES).map(([k, v]) => {
+            const active = order.status === k;
+            return (
+              <button key={k} onClick={() => onStatusChange(k)}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '999px', border: '1px solid ' + (active ? v.dot : '#e8e2d4'), backgroundColor: active ? v.bg : '#ffffff', color: active ? v.fg : '#6b6558', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: v.dot }}></span>{v.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ fontSize: '12px', color: '#8a7e66' }}>أُنشئ في {formatDate(order.createdAt)}</div>
+
+        <DetailBlock icon={<PhoneCall size={14} />} title="الزبون">
+          <div style={{ fontSize: '14px', fontWeight: 500 }}>{order.customerName}</div>
+          {order.customerPhone && (
+            <div style={{ display: 'flex', gap: '10px', marginTop: '6px', flexWrap: 'wrap' }}>
+              <a href={`tel:${order.customerPhone}`} style={linkBtn}><PhoneCall size={12} /> {order.customerPhone}</a>
+              <a href={`https://wa.me/${order.customerPhone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" style={{ ...linkBtn, color: '#059669', borderColor: '#a7f3d0' }}><MessageCircle size={12} /> واتساب</a>
+            </div>
+          )}
+        </DetailBlock>
+
+        {(addressStr || order.address?.extra) && (
+          <DetailBlock icon={<MapPin size={14} />} title="العنوان">
+            {addressStr && <div style={{ fontSize: '14px' }}>{addressStr}</div>}
+            {order.address?.extra && <div style={{ fontSize: '13px', color: '#6b6558', marginTop: '4px' }}>{order.address.extra}</div>}
+          </DetailBlock>
+        )}
+
+        <DetailBlock icon={<Package size={14} />} title="المنتجات">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {order.items.map((item, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '6px 0', borderBottom: i < order.items.length - 1 ? '1px solid #f0ece2' : 'none' }}>
+                <span><span className="num" style={{ fontWeight: 600, marginLeft: '6px' }}>×{item.quantity}</span>{item.name}</span>
+                <span className="num" style={{ fontWeight: 600 }}>{fmt(item.price * item.quantity)} د.ك</span>
+              </div>
+            ))}
+          </div>
+        </DetailBlock>
+
+        <div style={{ backgroundColor: '#faf7f0', border: '1px solid #e8e2d4', borderRadius: '10px', padding: '12px 14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#6b6558', marginBottom: '4px' }}>
+            <span>المجموع الفرعي</span><span className="num">{fmt(order.subtotal)} د.ك</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#6b6558', marginBottom: '8px' }}>
+            <span>التوصيل</span><span className="num">{fmt(order.deliveryFee)} د.ك</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 700, color: '#0f5e52', borderTop: '1px dashed #d5ccb8', paddingTop: '8px' }}>
+            <span>الإجمالي</span><span className="num">{fmt(order.total)} د.ك</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+          <div style={metaBox}>
+            <div style={{ fontSize: '11px', color: '#8a7e66', marginBottom: '4px' }}>طريقة الدفع</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500 }}><payment.Icon size={14} color="#6b6558" /> {payment.label}</div>
+          </div>
+          <div style={metaBox}>
+            <div style={{ fontSize: '11px', color: '#8a7e66', marginBottom: '4px' }}>المصدر</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500 }}><source.Icon size={14} color="#6b6558" /> {source.label}</div>
+          </div>
+        </div>
+
+        {order.notes && (
+          <DetailBlock icon={<FileText size={14} />} title="ملاحظات">
+            <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap' }}>{order.notes}</div>
+          </DetailBlock>
+        )}
+
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid #e8e2d4' }}>
+          <button onClick={onPrint} style={primaryBtn}><Printer size={16} /> طباعة الفاتورة</button>
+          <button onClick={onEdit} style={secondaryBtn}><Pencil size={14} /> تعديل</button>
+          <button onClick={onDelete} style={{ ...secondaryBtn, color: '#b91c1c', borderColor: '#fecaca', marginRight: 'auto' }}><Trash2 size={14} /> حذف</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ==================== PRODUCT FORM ====================
+function ProductFormModal({ product, onSave, onClose }) {
+  const [form, setForm] = useState(product || { name: '', price: 0 });
+  const handleSave = () => {
+    if (!form.name.trim()) { alert('اكتب اسم المنتج'); return; }
+    onSave({ ...form, price: parseFloat(form.price) || 0 });
+  };
+  return (
+    <Modal onClose={onClose} title={product ? 'تعديل منتج' : 'منتج جديد'} size="small">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <Field label="اسم المنتج *"><input type="text" autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} placeholder="مثلاً: قميص قطن" /></Field>
+        <Field label="السعر (د.ك) *"><input type="number" step="0.001" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} style={inputStyle} /></Field>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '8px' }}>
+          <button onClick={onClose} style={secondaryBtn}>إلغاء</button>
+          <button onClick={handleSave} style={primaryBtn}><Check size={16} /> حفظ</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ==================== INVOICE PRINT ====================
+function InvoicePrintView({ order, settings, onClose }) {
+  useEffect(() => {
+    const t = setTimeout(() => window.print(), 200);
+    return () => clearTimeout(t);
+  }, []);
+
+  const addressStr = [
+    order.address?.area, order.address?.block && `قطعة ${order.address.block}`,
+    order.address?.street && `شارع ${order.address.street}`, order.address?.avenue && `جادة ${order.address.avenue}`,
+    order.address?.house && `بيت ${order.address.house}`
+  ].filter(Boolean).join('، ');
+
+  return (
+    <div dir="rtl" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '20px', overflowY: 'auto' }} className="animate-fade-in">
+      <div style={{ backgroundColor: '#ffffff', maxWidth: '720px', width: '100%', borderRadius: '14px', overflow: 'hidden' }}>
+        <div className="no-print" style={{ padding: '14px 20px', borderBottom: '1px solid #e8e2d4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 className="font-display" style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>معاينة الفاتورة</h3>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => window.print()} style={primaryBtn}><Printer size={14} /> طباعة</button>
+            <button onClick={onClose} style={secondaryBtn}>إغلاق</button>
+          </div>
+        </div>
+
+        <div className="print-area" style={{ padding: '40px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px', paddingBottom: '20px', borderBottom: '2px solid #0f5e52' }}>
+            <div>
+              <h1 className="font-display" style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: '#0f5e52' }}>{settings.shopName || 'متجري'}</h1>
+              {settings.shopPhone && <div style={{ fontSize: '13px', color: '#6b6558', marginTop: '4px' }}>تلفون: {settings.shopPhone}</div>}
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '14px', color: '#8a7e66', marginBottom: '4px' }}>فاتورة</div>
+              <div className="num font-display" style={{ fontSize: '22px', fontWeight: 700 }}>#{order.orderNumber}</div>
+              <div style={{ fontSize: '12px', color: '#6b6558', marginTop: '4px' }}>{formatDate(order.createdAt)}</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '28px' }}>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#8a7e66', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>الزبون</div>
+              <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '2px' }}>{order.customerName}</div>
+              {order.customerPhone && <div className="num" style={{ fontSize: '13px' }}>{order.customerPhone}</div>}
+            </div>
+            {(addressStr || order.address?.extra) && (
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: '#8a7e66', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>العنوان</div>
+                {addressStr && <div style={{ fontSize: '13px', lineHeight: 1.6 }}>{addressStr}</div>}
+                {order.address?.extra && <div style={{ fontSize: '12px', color: '#6b6558', marginTop: '4px' }}>{order.address.extra}</div>}
+              </div>
+            )}
+          </div>
+
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#faf7f0' }}>
+                <th style={{ padding: '10px 12px', textAlign: 'right', fontSize: '12px', color: '#6b6558', fontWeight: 600, borderBottom: '1px solid #e8e2d4' }}>المنتج</th>
+                <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: '12px', color: '#6b6558', fontWeight: 600, borderBottom: '1px solid #e8e2d4', width: '70px' }}>الكمية</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '12px', color: '#6b6558', fontWeight: 600, borderBottom: '1px solid #e8e2d4', width: '100px' }}>السعر</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '12px', color: '#6b6558', fontWeight: 600, borderBottom: '1px solid #e8e2d4', width: '110px' }}>الإجمالي</th>
+              </tr>
+            </thead>
+            <tbody>
+              {order.items.map((it, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #f0ece2' }}>
+                  <td style={{ padding: '12px', fontSize: '13px' }}>{it.name}</td>
+                  <td className="num" style={{ padding: '12px', textAlign: 'center', fontSize: '13px' }}>{it.quantity}</td>
+                  <td className="num" style={{ padding: '12px', textAlign: 'left', fontSize: '13px' }}>{fmt(it.price)}</td>
+                  <td className="num" style={{ padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: 600 }}>{fmt(it.price * it.quantity)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <div style={{ minWidth: '260px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '13px' }}>
+                <span>المجموع الفرعي</span><span className="num">{fmt(order.subtotal)} د.ك</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '13px' }}>
+                <span>التوصيل</span><span className="num">{fmt(order.deliveryFee)} د.ك</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 6px', borderTop: '2px solid #0f5e52', marginTop: '6px', fontSize: '16px', color: '#0f5e52', fontWeight: 700 }}>
+                <span>الإجمالي</span><span className="num">{fmt(order.total)} د.ك</span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '28px', padding: '14px', backgroundColor: '#faf7f0', borderRadius: '8px', fontSize: '12px' }}>
+            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+              <div><strong>طريقة الدفع:</strong> {PAYMENTS[order.paymentMethod]?.label || '-'}</div>
+              <div><strong>المصدر:</strong> {SOURCES[order.source]?.label || '-'}</div>
+            </div>
+            {order.notes && <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e8e2d4' }}><strong>ملاحظات:</strong> {order.notes}</div>}
+          </div>
+
+          <div style={{ marginTop: '28px', paddingTop: '16px', borderTop: '1px dashed #d5ccb8', textAlign: 'center', fontSize: '12px', color: '#8a7e66' }}>
+            شكراً لثقتكم · {settings.shopName || 'متجري'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== SHARED ====================
+function Modal({ title, children, onClose, size = 'medium' }) {
+  const maxWidth = size === 'small' ? '480px' : size === 'large' ? '780px' : '640px';
+  return (
+    <div className="animate-fade-in" onClick={onClose} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(31,27,18,0.45)', zIndex: 40, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '20px 16px', overflowY: 'auto' }}>
+      <div onClick={(e) => e.stopPropagation()} className="animate-slide-up" style={{ backgroundColor: '#ffffff', width: '100%', maxWidth, borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
+        <div style={{ padding: '18px 22px', borderBottom: '1px solid #e8e2d4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 className="font-display" style={{ margin: 0, fontSize: '17px', fontWeight: 600 }}>{title}</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#6b6558', borderRadius: '6px' }}><X size={20} /></button>
+        </div>
+        <div style={{ padding: '20px 22px' }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function Section({ title, children, action }) {
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <h4 className="font-display" style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#6b6558', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</h4>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <span style={{ fontSize: '12px', fontWeight: 500, color: '#6b6558' }}>{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function DetailBlock({ icon, title, children }) {
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 600, color: '#8a7e66', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        {icon} {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function EmptyState({ icon, title, description, action }) {
+  return (
+    <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+      <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: '#faf7f0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>{icon}</div>
+      <div className="font-display" style={{ fontSize: '16px', fontWeight: 600, marginBottom: '4px' }}>{title}</div>
+      <div style={{ fontSize: '13px', color: '#8a7e66', marginBottom: action ? '16px' : 0 }}>{description}</div>
+      {action}
+    </div>
+  );
+}
+
+// ==================== STYLES ====================
+const inputStyle = { width: '100%', padding: '10px 12px', border: '1px solid #e8e2d4', borderRadius: '10px', backgroundColor: '#ffffff', fontSize: '14px', color: '#1f1b12' };
+const primaryBtn = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', backgroundColor: '#0f5e52', color: '#ffffff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' };
+const secondaryBtn = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 14px', backgroundColor: '#ffffff', color: '#4a4438', border: '1px solid #e8e2d4', borderRadius: '10px', fontSize: '14px', fontWeight: 500, cursor: 'pointer' };
+const smallPrimaryBtn = { display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '7px 12px', backgroundColor: '#0f5e52', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' };
+const smallBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '7px 10px', backgroundColor: '#ffffff', color: '#4a4438', border: '1px solid #e8e2d4', borderRadius: '8px', fontSize: '12px', fontWeight: 500, cursor: 'pointer' };
+const qtyBtn = { width: '26px', height: '26px', borderRadius: '6px', border: '1px solid #d5ccb8', backgroundColor: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 600, padding: 0 };
+const menuItem = { display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', textAlign: 'right' };
+const linkBtn = { display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', fontSize: '12px', fontWeight: 500, color: '#0f5e52', backgroundColor: '#ffffff', border: '1px solid #c7e5dc', borderRadius: '6px', textDecoration: 'none' };
+const metaBox = { padding: '10px 12px', backgroundColor: '#faf7f0', border: '1px solid #e8e2d4', borderRadius: '10px' };
+
+// ==================== MOUNT ====================
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<OrderManagementApp />);
+</script>
+</body>
+</html>
