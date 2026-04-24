@@ -56,7 +56,7 @@ const { useState, useEffect, useMemo, useRef } = React;
 // ==================== SUPABASE CONFIG ====================
 const SUPABASE_URL = 'https://qxwwyuczgjoczqnzlewi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_N6Jj6iGYva7s6THtP-YQqw_Yvzp1z4a';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ==================== ICONS ====================
 const SvgIcon = ({ size = 16, color = 'currentColor', strokeWidth = 2, style, children }) => (
@@ -195,9 +195,9 @@ function OrderManagementApp() {
   const loadData = async () => {
     try {
       const [ordersRes, productsRes, settingsRes] = await Promise.all([
-        supabase.from('orders').select('*').order('created_at', { ascending: false }),
-        supabase.from('products').select('*').order('created_at', { ascending: false }),
-        supabase.from('settings').select('*').eq('id', 1).maybeSingle()
+        sb.from('orders').select('*').order('created_at', { ascending: false }),
+        sb.from('products').select('*').order('created_at', { ascending: false }),
+        sb.from('settings').select('*').eq('id', 1).maybeSingle()
       ]);
 
       if (ordersRes.error) throw ordersRes.error;
@@ -240,7 +240,7 @@ function OrderManagementApp() {
         loadData();
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { sb.removeChannel(channel); };
   }, [loaded]);
 
   const showToast = (msg, type = 'success') => {
@@ -253,11 +253,11 @@ function OrderManagementApp() {
     try {
       const payload = appOrderToDb(order);
       if (order.id) {
-        const { error } = await supabase.from('orders').update(payload).eq('id', order.id);
+        const { error } = await sb.from('orders').update(payload).eq('id', order.id);
         if (error) throw error;
         showToast('تم تحديث الطلب');
       } else {
-        const { error } = await supabase.from('orders').insert(payload);
+        const { error } = await sb.from('orders').insert(payload);
         if (error) throw error;
         showToast('تم إضافة الطلب');
       }
@@ -273,7 +273,7 @@ function OrderManagementApp() {
   const deleteOrder = async (id) => {
     if (!window.confirm('تبي تحذف الطلب؟ ما راح نقدر نرجعه.')) return;
     try {
-      const { error } = await supabase.from('orders').delete().eq('id', id);
+      const { error } = await sb.from('orders').delete().eq('id', id);
       if (error) throw error;
       setViewingOrder(null);
       showToast('تم حذف الطلب');
@@ -285,7 +285,7 @@ function OrderManagementApp() {
 
   const updateOrderStatus = async (id, status) => {
     try {
-      const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+      const { error } = await sb.from('orders').update({ status }).eq('id', id);
       if (error) throw error;
       await loadData();
     } catch (err) {
@@ -298,11 +298,11 @@ function OrderManagementApp() {
     try {
       const payload = { name: product.name, price: product.price };
       if (product.id) {
-        const { error } = await supabase.from('products').update(payload).eq('id', product.id);
+        const { error } = await sb.from('products').update(payload).eq('id', product.id);
         if (error) throw error;
         showToast('تم تحديث المنتج');
       } else {
-        const { error } = await supabase.from('products').insert(payload);
+        const { error } = await sb.from('products').insert(payload);
         if (error) throw error;
         showToast('تم إضافة المنتج');
       }
@@ -317,7 +317,7 @@ function OrderManagementApp() {
   const deleteProduct = async (id) => {
     if (!window.confirm('تبي تحذف المنتج؟')) return;
     try {
-      const { error } = await supabase.from('products').delete().eq('id', id);
+      const { error } = await sb.from('products').delete().eq('id', id);
       if (error) throw error;
       showToast('تم حذف المنتج');
       await loadData();
@@ -328,7 +328,7 @@ function OrderManagementApp() {
 
   const saveSettings = async (newSettings) => {
     try {
-      const { error } = await supabase.from('settings').update({
+      const { error } = await sb.from('settings').update({
         shop_name: newSettings.shopName,
         shop_phone: newSettings.shopPhone,
         default_delivery_fee: newSettings.defaultDeliveryFee
