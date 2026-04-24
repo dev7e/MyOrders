@@ -101,6 +101,51 @@ const Users = (p) => <SvgIcon {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 
 const Crown = (p) => <SvgIcon {...p}><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></SvgIcon>;
 const Briefcase = (p) => <SvgIcon {...p}><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></SvgIcon>;
 const UserIcon = (p) => <SvgIcon {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></SvgIcon>;
+const ShoppingCart = (p) => <SvgIcon {...p}><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></SvgIcon>;
+const ImageIcon = (p) => <SvgIcon {...p}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></SvgIcon>;
+const Upload = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></SvgIcon>;
+const Minus = (p) => <SvgIcon {...p}><path d="M5 12h14"/></SvgIcon>;
+const CheckCircle = (p) => <SvgIcon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></SvgIcon>;
+
+// ==================== KUWAIT AREAS (by governorate) ====================
+const KW_AREAS_BY_GOV = {
+  'العاصمة': [
+    'الشرق', 'المرقاب', 'الدسمة', 'الدعية', 'القبلة', 'الصوابر', 'الشامية', 'الشويخ',
+    'كيفان', 'القادسية', 'المنصورية', 'الفيحاء', 'النزهة', 'الروضة', 'العديلية',
+    'الخالدية', 'السرة', 'اليرموك', 'قرطبة', 'الصليبخات', 'الدوحة', 'غرناطة',
+    'الشويخ السكنية', 'النهضة', 'الرابية', 'بنيد القار', 'عبدالله السالم',
+    'ضاحية عبدالله السالم', 'الصالحية'
+  ],
+  'حولي': [
+    'السالمية', 'الرميثية', 'حولي', 'ميدان حولي', 'بيان', 'مشرف', 'سلوى', 'الجابرية',
+    'الشعب', 'البدع', 'الزهراء', 'الشهداء', 'الصديق', 'حطين', 'السلام', 'الرومانسية',
+    'النقرة', 'الشعب البحري', 'شرق السالمية', 'غرب السالمية', 'جنوب السرة'
+  ],
+  'الفروانية': [
+    'الفروانية', 'الرحاب', 'إشبيلية', 'العمرية', 'خيطان', 'الأندلس', 'الرقعي',
+    'العارضية', 'الرابية', 'جليب الشيوخ', 'صباح الناصر', 'الضجيج',
+    'العارضية الصناعية', 'خيطان الجنوبي', 'العمرية الصناعية', 'الفردوس',
+    'جابر العلي', 'مطار الكويت'
+  ],
+  'مبارك الكبير': [
+    'المسيلة', 'صباح السالم', 'المسايل', 'القصور', 'العدان', 'القرين', 'مبارك الكبير',
+    'أبو الحصانية', 'أبو فطيرة', 'الفنيطيس', 'صبحان', 'الفنطاس', 'الوسطى'
+  ],
+  'الأحمدي': [
+    'الأحمدي', 'الفحيحيل', 'المنقف', 'الرقة', 'هدية', 'العقيلة', 'فهد الأحمد',
+    'الظهر', 'الصباحية', 'الفنطاس', 'المهبولة', 'أبو حليفة', 'الفنيطيس',
+    'علي صباح السالم', 'جابر العلي', 'ضاحية فهد الأحمد', 'صباح الأحمد البحرية',
+    'الخيران', 'الزور', 'الوفرة السكنية', 'الوفرة الزراعية', 'المقوع',
+    'ميناء عبدالله', 'الشعيبة', 'الرياض', 'بنيدر', 'بنيد'
+  ],
+  'الجهراء': [
+    'الجهراء', 'الواحة', 'النعيم', 'القصر', 'سعد العبدالله', 'الصليبية', 'تيماء',
+    'العيون', 'العبدلي', 'الصبية', 'كبد', 'الروضتين', 'النسيم',
+    'جهراء الأقرة', 'الواحة الجديدة', 'الجهراء الصناعية'
+  ]
+};
+
+const KW_GOVS = Object.keys(KW_AREAS_BY_GOV);
 
 // ==================== CONSTANTS ====================
 const STATUSES = {
@@ -111,6 +156,7 @@ const STATUSES = {
 };
 
 const SOURCES = {
+  website: { label: 'المتجر', Icon: ShoppingCart },
   whatsapp: { label: 'واتساب', Icon: MessageCircle },
   instagram: { label: 'انستقرام', Icon: Instagram },
   phone: { label: 'اتصال', Icon: PhoneCall },
@@ -196,8 +242,385 @@ const dbProductToApp = (row) => ({
   id: row.id,
   name: row.name,
   price: Number(row.price) || 0,
+  imageUrl: row.image_url || '',
+  description: row.description || '',
+  isActive: row.is_active !== false,
   createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now()
 });
+
+// ==================== ROUTER ====================
+function App() {
+  const [route, setRoute] = useState(window.location.hash);
+
+  useEffect(() => {
+    const onHashChange = () => setRoute(window.location.hash);
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  // Remove the loading screen as soon as App mounts
+  useEffect(() => {
+    const el = document.getElementById('loading');
+    if (el) el.classList.add('hidden');
+  }, []);
+
+  // Admin route
+  if (route.startsWith('#admin')) {
+    return <AuthGate />;
+  }
+
+  // Public shop (default)
+  return <PublicShop />;
+}
+
+// ==================== PUBLIC SHOP ====================
+function PublicShop() {
+  const [products, setProducts] = useState([]);
+  const [settings, setSettings] = useState({ shopName: 'متجري', shopPhone: '', defaultDeliveryFee: 1.000 });
+  const [loading, setLoading] = useState(true);
+  const [cart, setCart] = useState([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [successOrder, setSuccessOrder] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [productsRes, settingsRes] = await Promise.all([
+          sb.from('products').select('*').eq('is_active', true).order('created_at', { ascending: false }),
+          sb.from('settings').select('*').eq('id', 1).maybeSingle()
+        ]);
+        if (productsRes.data) setProducts(productsRes.data.map(dbProductToApp));
+        if (settingsRes.data) {
+          setSettings({
+            shopName: settingsRes.data.shop_name || 'متجري',
+            shopPhone: settingsRes.data.shop_phone || '',
+            defaultDeliveryFee: Number(settingsRes.data.default_delivery_fee) || 1.000
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const addToCart = (product) => {
+    setCart(c => {
+      const existing = c.find(i => i.productId === product.id);
+      if (existing) return c.map(i => i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+      return [...c, { productId: product.id, name: product.name, price: product.price, imageUrl: product.imageUrl, quantity: 1 }];
+    });
+    setCartOpen(true);
+  };
+
+  const updateQty = (productId, qty) => {
+    if (qty <= 0) setCart(c => c.filter(i => i.productId !== productId));
+    else setCart(c => c.map(i => i.productId === productId ? { ...i, quantity: qty } : i));
+  };
+
+  const removeFromCart = (productId) => setCart(c => c.filter(i => i.productId !== productId));
+
+  const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+  const deliveryFee = settings.defaultDeliveryFee;
+  const total = subtotal + deliveryFee;
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f6f2eb' }}>
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  if (successOrder) {
+    return <OrderSuccessScreen order={successOrder} settings={settings} onBack={() => { setSuccessOrder(null); setCart([]); }} />;
+  }
+
+  return (
+    <div dir="rtl" style={{ minHeight: '100vh', backgroundColor: '#f6f2eb', paddingBottom: cart.length > 0 ? '80px' : '20px' }}>
+      {/* Hero Header */}
+      <header style={{ backgroundColor: '#0f5e52', color: '#ffffff', padding: '40px 20px 32px', textAlign: 'center' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.15)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+            <Store size={28} color="#ffffff" strokeWidth={2} />
+          </div>
+          <h1 className="font-display" style={{ margin: 0, fontSize: '28px', fontWeight: 700 }}>{settings.shopName}</h1>
+          <p style={{ margin: '6px 0 0', fontSize: '14px', opacity: 0.85 }}>توصيل للكويت · دفع عند الاستلام</p>
+        </div>
+      </header>
+
+      {/* Products Grid */}
+      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '24px 16px' }}>
+        <h2 className="font-display" style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: 600, color: '#1f1b12' }}>
+          المنتجات {products.length > 0 && <span style={{ color: '#8a7e66', fontSize: '14px', fontWeight: 500 }}>({products.length})</span>}
+        </h2>
+
+        {products.length === 0 ? (
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '14px', padding: '60px 20px', textAlign: 'center', border: '1px solid #e8e2d4' }}>
+            <Package size={40} color="#bdb29a" />
+            <div className="font-display" style={{ fontSize: '16px', fontWeight: 600, marginTop: '12px' }}>لا توجد منتجات حالياً</div>
+            <div style={{ fontSize: '13px', color: '#8a7e66', marginTop: '4px' }}>تحقق لاحقاً</div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+            {products.map(p => <ProductCard key={p.id} product={p} onAdd={addToCart} cartQty={cart.find(i => i.productId === p.id)?.quantity || 0} />)}
+          </div>
+        )}
+      </main>
+
+      {/* Cart floating button */}
+      {cart.length > 0 && !cartOpen && !checkoutOpen && (
+        <button onClick={() => setCartOpen(true)}
+          style={{ position: 'fixed', bottom: '20px', right: '50%', transform: 'translateX(50%)', backgroundColor: '#0f5e52', color: '#ffffff', border: 'none', padding: '14px 22px', borderRadius: '999px', fontSize: '15px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 24px rgba(15,94,82,0.3)', zIndex: 30 }}>
+          <ShoppingCart size={18} />
+          <span>{cart.reduce((s, i) => s + i.quantity, 0)} منتج</span>
+          <span style={{ opacity: 0.8 }}>·</span>
+          <span className="num">{fmt(total)} د.ك</span>
+        </button>
+      )}
+
+      {cartOpen && <CartDrawer cart={cart} subtotal={subtotal} deliveryFee={deliveryFee} total={total} onUpdate={updateQty} onRemove={removeFromCart} onClose={() => setCartOpen(false)} onCheckout={() => { setCartOpen(false); setCheckoutOpen(true); }} />}
+      {checkoutOpen && <CheckoutModal cart={cart} subtotal={subtotal} deliveryFee={deliveryFee} total={total} onClose={() => setCheckoutOpen(false)} onSuccess={(order) => { setCheckoutOpen(false); setSuccessOrder(order); }} />}
+
+      {/* Tiny admin link in footer */}
+      <footer style={{ textAlign: 'center', padding: '20px', fontSize: '11px', color: '#bdb29a' }}>
+        © {new Date().getFullYear()} {settings.shopName}
+      </footer>
+    </div>
+  );
+}
+
+function ProductCard({ product, onAdd, cartQty }) {
+  return (
+    <div style={{ backgroundColor: '#ffffff', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e8e2d4', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ aspectRatio: '1', backgroundColor: '#faf7f0', position: 'relative', overflow: 'hidden' }}>
+        {product.imageUrl ? (
+          <img src={product.imageUrl} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Package size={40} color="#d5ccb8" />
+          </div>
+        )}
+        {cartQty > 0 && (
+          <div style={{ position: 'absolute', top: '8px', left: '8px', backgroundColor: '#0f5e52', color: '#ffffff', fontSize: '11px', fontWeight: 600, padding: '3px 8px', borderRadius: '999px' }}>
+            ×{cartQty}
+          </div>
+        )}
+      </div>
+      <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+        <div style={{ fontWeight: 600, fontSize: '14px', color: '#1f1b12', lineHeight: 1.3 }}>{product.name}</div>
+        {product.description && <div style={{ fontSize: '12px', color: '#8a7e66', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.description}</div>}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '6px' }}>
+          <span className="num" style={{ fontSize: '15px', fontWeight: 700, color: '#0f5e52' }}>{fmt(product.price)} د.ك</span>
+          <button onClick={() => onAdd(product)} style={{ backgroundColor: '#0f5e52', color: '#ffffff', border: 'none', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Plus size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CartDrawer({ cart, subtotal, deliveryFee, total, onUpdate, onRemove, onClose, onCheckout }) {
+  return (
+    <div className="animate-fade-in" onClick={onClose} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(31,27,18,0.45)', zIndex: 40, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div onClick={(e) => e.stopPropagation()} className="animate-slide-up" style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '540px', borderRadius: '20px 20px 0 0', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e8e2d4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 className="font-display" style={{ margin: 0, fontSize: '17px', fontWeight: 600 }}>السلة ({cart.reduce((s, i) => s + i.quantity, 0)})</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#6b6558' }}><X size={20} /></button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {cart.map(item => (
+            <div key={item.productId} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', backgroundColor: '#faf7f0', borderRadius: '10px', border: '1px solid #e8e2d4' }}>
+              <div style={{ width: '50px', height: '50px', borderRadius: '8px', backgroundColor: '#ffffff', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {item.imageUrl ? <img src={item.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Package size={20} color="#bdb29a" />}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '13px', fontWeight: 600 }}>{item.name}</div>
+                <div className="num" style={{ fontSize: '12px', color: '#0f5e52', fontWeight: 600 }}>{fmt(item.price)} د.ك</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#ffffff', borderRadius: '8px', padding: '3px', border: '1px solid #d5ccb8' }}>
+                <button onClick={() => onUpdate(item.productId, item.quantity - 1)} style={{ ...qtyBtn, border: 'none' }}><Minus size={12} /></button>
+                <span className="num" style={{ minWidth: '22px', textAlign: 'center', fontWeight: 600, fontSize: '13px' }}>{item.quantity}</span>
+                <button onClick={() => onUpdate(item.productId, item.quantity + 1)} style={{ ...qtyBtn, border: 'none' }}><Plus size={12} /></button>
+              </div>
+              <button onClick={() => onRemove(item.productId)} style={{ background: 'none', border: 'none', color: '#b91c1c', cursor: 'pointer', padding: '4px' }}><Trash2 size={14} /></button>
+            </div>
+          ))}
+        </div>
+        <div style={{ padding: '16px 20px', borderTop: '1px solid #e8e2d4', backgroundColor: '#faf7f0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#6b6558', marginBottom: '4px' }}>
+            <span>المجموع الفرعي</span><span className="num">{fmt(subtotal)} د.ك</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#6b6558', marginBottom: '10px' }}>
+            <span>التوصيل</span><span className="num">{fmt(deliveryFee)} د.ك</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '17px', fontWeight: 700, color: '#0f5e52', marginBottom: '12px', paddingTop: '10px', borderTop: '1px dashed #d5ccb8' }}>
+            <span>الإجمالي</span><span className="num">{fmt(total)} د.ك</span>
+          </div>
+          <button onClick={onCheckout} style={{ ...primaryBtn, width: '100%', justifyContent: 'center', padding: '14px', fontSize: '15px' }}>متابعة الطلب</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CheckoutModal({ cart, subtotal, deliveryFee, total, onClose, onSuccess }) {
+  const [form, setForm] = useState({
+    customerName: '', customerPhone: '',
+    area: '', block: '', street: '', avenue: '', house: '', extra: '',
+    paymentMethod: 'cash', notes: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    if (!form.customerName.trim()) { setError('أدخل اسمك'); return; }
+    if (!form.customerPhone.trim() || form.customerPhone.length < 8) { setError('أدخل رقم تلفون صحيح'); return; }
+    if (!form.area) { setError('اختر المنطقة'); return; }
+    if (!form.block.trim() || !form.street.trim() || !form.house.trim()) { setError('أكمل بيانات العنوان'); return; }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        customer_name: form.customerName.trim(),
+        customer_phone: form.customerPhone.trim(),
+        address: {
+          area: form.area, block: form.block.trim(), street: form.street.trim(),
+          avenue: form.avenue.trim(), house: form.house.trim(), extra: form.extra.trim()
+        },
+        items: cart.map(i => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity })),
+        subtotal, delivery_fee: deliveryFee, total,
+        payment_method: form.paymentMethod,
+        source: 'website', status: 'new',
+        notes: form.notes.trim() || null
+      };
+      const { data, error: err } = await sb.from('orders').insert(payload).select().single();
+      if (err) throw err;
+      onSuccess(dbOrderToApp(data));
+    } catch (err) {
+      setError('فشل إرسال الطلب: ' + err.message);
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal onClose={onClose} title="إتمام الطلب" size="medium">
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {error && (
+          <div style={{ padding: '10px 14px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', color: '#b91c1c', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertTriangle size={14} /> {error}
+          </div>
+        )}
+
+        <Section title="بياناتك">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <Field label="الاسم *"><input type="text" required value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} style={inputStyle} placeholder="اسمك الكريم" /></Field>
+            <Field label="رقم التلفون *"><input type="tel" required value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} style={inputStyle} placeholder="999xxxxx" /></Field>
+          </div>
+        </Section>
+
+        <Section title="عنوان التوصيل">
+          <Field label="المنطقة *">
+            <select required value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} style={inputStyle}>
+              <option value="">اختر المنطقة</option>
+              {KW_GOVS.map(gov => (
+                <optgroup key={gov} label={`محافظة ${gov}`}>
+                  {KW_AREAS_BY_GOV[gov].map(a => <option key={a} value={a}>{a}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </Field>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '12px', marginTop: '12px' }}>
+            <Field label="قطعة *"><input type="text" required value={form.block} onChange={(e) => setForm({ ...form, block: e.target.value })} style={inputStyle} /></Field>
+            <Field label="شارع *"><input type="text" required value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} style={inputStyle} /></Field>
+            <Field label="جادة"><input type="text" value={form.avenue} onChange={(e) => setForm({ ...form, avenue: e.target.value })} style={inputStyle} /></Field>
+            <Field label="بيت *"><input type="text" required value={form.house} onChange={(e) => setForm({ ...form, house: e.target.value })} style={inputStyle} /></Field>
+          </div>
+          <div style={{ marginTop: '12px' }}>
+            <Field label="تفاصيل إضافية"><textarea value={form.extra} onChange={(e) => setForm({ ...form, extra: e.target.value })} style={{ ...inputStyle, resize: 'vertical', minHeight: '60px' }} placeholder="علامة مميزة / طابق / شقة..." /></Field>
+          </div>
+        </Section>
+
+        <Section title="طريقة الدفع">
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {Object.entries(PAYMENTS).map(([k, v]) => {
+              const active = form.paymentMethod === k;
+              return (
+                <button key={k} type="button" onClick={() => setForm({ ...form, paymentMethod: k })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 14px', borderRadius: '10px', border: '2px solid ' + (active ? '#0f5e52' : '#e8e2d4'), backgroundColor: active ? '#ecfdf5' : '#ffffff', color: active ? '#0f5e52' : '#4a4438', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                  <v.Icon size={14} /> {v.label}
+                </button>
+              );
+            })}
+          </div>
+        </Section>
+
+        <Section title="ملاحظات (اختياري)">
+          <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} style={{ ...inputStyle, resize: 'vertical', minHeight: '60px' }} placeholder="أي ملاحظة للبائع..." />
+        </Section>
+
+        <div style={{ padding: '14px', backgroundColor: '#faf7f0', border: '1px solid #e8e2d4', borderRadius: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#6b6558', marginBottom: '4px' }}>
+            <span>المجموع الفرعي</span><span className="num">{fmt(subtotal)} د.ك</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#6b6558', marginBottom: '8px' }}>
+            <span>التوصيل</span><span className="num">{fmt(deliveryFee)} د.ك</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 700, color: '#0f5e52', borderTop: '1px dashed #d5ccb8', paddingTop: '8px' }}>
+            <span>الإجمالي</span><span className="num">{fmt(total)} د.ك</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', paddingTop: '8px', borderTop: '1px solid #e8e2d4' }}>
+          <button type="button" onClick={onClose} disabled={submitting} style={secondaryBtn}>إلغاء</button>
+          <button type="submit" disabled={submitting} style={{ ...primaryBtn, flex: 1, justifyContent: 'center', opacity: submitting ? 0.6 : 1 }}>
+            {submitting ? 'جاري الإرسال...' : 'تأكيد الطلب'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function OrderSuccessScreen({ order, settings, onBack }) {
+  const waLink = settings.shopPhone ? `https://wa.me/${settings.shopPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('مرحباً، بخصوص طلب رقم #' + order.orderNumber)}` : null;
+  return (
+    <div dir="rtl" style={{ minHeight: '100vh', backgroundColor: '#f6f2eb', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div className="animate-slide-up" style={{ width: '100%', maxWidth: '480px', backgroundColor: '#ffffff', borderRadius: '20px', padding: '32px', textAlign: 'center', boxShadow: '0 12px 40px rgba(31,27,18,0.08)' }}>
+        <div style={{ width: '72px', height: '72px', borderRadius: '50%', backgroundColor: '#ecfdf5', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+          <CheckCircle size={36} color="#059669" />
+        </div>
+        <h2 className="font-display" style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#1f1b12' }}>تم استلام طلبك! 🎉</h2>
+        <p style={{ margin: '8px 0 20px', fontSize: '14px', color: '#6b6558', lineHeight: 1.6 }}>
+          رقم طلبك: <span className="num font-display" style={{ fontWeight: 700, color: '#0f5e52' }}>#{order.orderNumber}</span>
+          <br />
+          بنتواصل معاك قريباً لتأكيد الطلب والتوصيل.
+        </p>
+        <div style={{ padding: '14px', backgroundColor: '#faf7f0', borderRadius: '10px', marginBottom: '16px', fontSize: '13px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#6b6558' }}>
+            <span>الإجمالي</span><span className="num" style={{ fontWeight: 700, color: '#0f5e52' }}>{fmt(order.total)} د.ك</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: '#6b6558' }}>
+            <span>طريقة الدفع</span><span style={{ fontWeight: 600 }}>{PAYMENTS[order.paymentMethod]?.label}</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+          {waLink && (
+            <a href={waLink} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', backgroundColor: '#059669', color: '#ffffff', borderRadius: '10px', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}>
+              <MessageCircle size={16} /> تواصل معنا على واتساب
+            </a>
+          )}
+          <button onClick={onBack} style={{ ...secondaryBtn, justifyContent: 'center', padding: '12px' }}>متابعة التسوق</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ==================== AUTH GATE ====================
 function AuthGate() {
@@ -208,8 +631,6 @@ function AuthGate() {
     sb.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setAuthLoading(false);
-      const el = document.getElementById('loading');
-      if (el) el.classList.add('hidden');
     });
 
     const { data: subscription } = sb.auth.onAuthStateChange((_event, newSession) => {
@@ -219,7 +640,13 @@ function AuthGate() {
     return () => { subscription?.subscription?.unsubscribe(); };
   }, []);
 
-  if (authLoading) return null;
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f6f2eb' }}>
+        <div className="spinner"></div>
+      </div>
+    );
+  }
 
   if (!session) {
     return <LoginScreen />;
@@ -519,7 +946,13 @@ function OrderManagementApp({ session }) {
   // ========== PRODUCT ACTIONS ==========
   const saveProduct = async (product) => {
     try {
-      const payload = { name: product.name, price: product.price };
+      const payload = {
+        name: product.name,
+        price: product.price,
+        image_url: product.image_url !== undefined ? product.image_url : null,
+        description: product.description !== undefined ? product.description : null,
+        is_active: product.is_active !== false
+      };
       if (product.id) {
         const { error } = await sb.from('products').update(payload).eq('id', product.id);
         if (error) throw error;
@@ -596,6 +1029,10 @@ function OrderManagementApp({ session }) {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <a href="#" onClick={(e) => { e.preventDefault(); window.location.hash = ''; }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 14px', backgroundColor: '#ffffff', color: '#0f5e52', border: '1px solid #c7e5dc', borderRadius: '10px', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
+              <ShoppingCart size={14} /> عرض المتجر
+            </a>
             <button onClick={() => { setEditingOrder(null); setShowOrderForm(true); }}
               style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#0f5e52', color: '#ffffff', border: 'none', padding: '10px 18px', borderRadius: '10px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
               <Plus size={16} /> طلب جديد
@@ -822,27 +1259,30 @@ function ProductsView({ products, userRole, onAdd, onEdit, onDelete }) {
       </div>
       {products.length === 0 ? (
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px' }}>
-          <EmptyState icon={<Package size={32} color="#bdb29a" />} title="ما فيه منتجات بعد" description={canEdit ? 'ضيف منتجاتك عشان تقدر تختار منها في الطلبات' : 'لا توجد منتجات. تواصل مع المدير لإضافتها.'} action={canEdit && <button onClick={onAdd} style={primaryBtn}><Plus size={16} /> إضافة منتج</button>} />
+          <EmptyState icon={<Package size={32} color="#bdb29a" />} title="ما فيه منتجات بعد" description={canEdit ? 'ضيف منتجاتك عشان تظهر في المتجر' : 'لا توجد منتجات.'} action={canEdit && <button onClick={onAdd} style={primaryBtn}><Plus size={16} /> إضافة منتج</button>} />
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
           {products.map(p => (
-            <div key={p.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#f6f2eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Package size={18} color="#6b6558" />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+            <div key={p.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative', opacity: p.isActive === false ? 0.6 : 1 }}>
+              {p.isActive === false && (
+                <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 2, backgroundColor: '#fef2f2', color: '#b91c1c', fontSize: '10px', fontWeight: 600, padding: '3px 8px', borderRadius: '999px', border: '1px solid #fecaca' }}>مخفي</div>
+              )}
+              <div style={{ aspectRatio: '1', backgroundColor: '#faf7f0', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {p.imageUrl ? <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Package size={32} color="#d5ccb8" />}
+              </div>
+              <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
                   <div className="num" style={{ fontSize: '14px', color: '#0f5e52', fontWeight: 600 }}>{fmt(p.price)} د.ك</div>
                 </div>
+                {canEdit && (
+                  <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
+                    <button onClick={() => onEdit(p)} style={{ ...smallBtn, flex: 1 }}><Pencil size={13} /> تعديل</button>
+                    <button onClick={() => onDelete(p.id)} style={{ ...smallBtn, flex: 1, color: '#b91c1c', borderColor: '#fecaca' }}><Trash2 size={13} /> حذف</button>
+                  </div>
+                )}
               </div>
-              {canEdit && (
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <button onClick={() => onEdit(p)} style={{ ...smallBtn, flex: 1 }}><Pencil size={13} /> تعديل</button>
-                  <button onClick={() => onDelete(p.id)} style={{ ...smallBtn, flex: 1, color: '#b91c1c', borderColor: '#fecaca' }}><Trash2 size={13} /> حذف</button>
-                </div>
-              )}
             </div>
           ))}
         </div>
@@ -1433,22 +1873,81 @@ function OrderDetailModal({ order, userRole, onClose, onEdit, onDelete, onStatus
 
 // ==================== PRODUCT FORM ====================
 function ProductFormModal({ product, onSave, onClose }) {
-  const [form, setForm] = useState(product || { name: '', price: 0 });
+  const [form, setForm] = useState(product || { name: '', price: 0, imageUrl: '', description: '', isActive: true });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef();
+
+  const handleUpload = async (file) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('حجم الصورة كبير (الحد الأقصى 5MB)'); return; }
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: uploadErr } = await sb.storage.from('products').upload(fileName, file, { upsert: false });
+      if (uploadErr) throw uploadErr;
+      const { data: { publicUrl } } = sb.storage.from('products').getPublicUrl(fileName);
+      setForm(f => ({ ...f, imageUrl: publicUrl }));
+    } catch (err) {
+      alert('فشل رفع الصورة: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!form.name.trim()) { alert('اكتب اسم المنتج'); return; }
     setSaving(true);
-    await onSave({ ...form, price: parseFloat(form.price) || 0 });
+    await onSave({
+      id: form.id,
+      name: form.name,
+      price: parseFloat(form.price) || 0,
+      image_url: form.imageUrl || null,
+      description: form.description || null,
+      is_active: form.isActive !== false
+    });
     setSaving(false);
   };
+
   return (
     <Modal onClose={onClose} title={product ? 'تعديل منتج' : 'منتج جديد'} size="small">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <Field label="اسم المنتج *"><input type="text" autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} placeholder="مثلاً: قميص قطن" /></Field>
+        <Field label="صورة المنتج">
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '10px', backgroundColor: '#faf7f0', border: '1px solid #e8e2d4', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {form.imageUrl ? <img src={form.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={24} color="#bdb29a" />}
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+                onChange={(e) => handleUpload(e.target.files[0])} />
+              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                style={{ ...smallBtn, justifyContent: 'center' }}>
+                <Upload size={13} /> {uploading ? 'جاري الرفع...' : (form.imageUrl ? 'تغيير الصورة' : 'رفع صورة')}
+              </button>
+              {form.imageUrl && (
+                <button type="button" onClick={() => setForm({ ...form, imageUrl: '' })}
+                  style={{ ...smallBtn, color: '#b91c1c', borderColor: '#fecaca', justifyContent: 'center' }}>
+                  <Trash2 size={13} /> إزالة
+                </button>
+              )}
+            </div>
+          </div>
+        </Field>
+        <Field label="اسم المنتج *"><input type="text" autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} placeholder="مثلاً: قلادة فضة" /></Field>
         <Field label="السعر (د.ك) *"><input type="number" step="0.001" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} style={inputStyle} /></Field>
+        <Field label="الوصف (اختياري)"><textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} style={{ ...inputStyle, resize: 'vertical', minHeight: '70px' }} placeholder="وصف قصير للمنتج..." /></Field>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', backgroundColor: '#faf7f0', borderRadius: '10px', cursor: 'pointer', border: '1px solid #e8e2d4' }}>
+          <input type="checkbox" checked={form.isActive !== false} onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+            style={{ width: '18px', height: '18px', accentColor: '#0f5e52' }} />
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>{form.isActive !== false ? 'ظاهر في المتجر' : 'مخفي من المتجر'}</div>
+            <div style={{ fontSize: '11px', color: '#8a7e66' }}>{form.isActive !== false ? 'الزباين يشوفونه ويقدرون يطلبونه' : 'المنتج موجود بس ما يظهر للزباين'}</div>
+          </div>
+        </label>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '8px' }}>
           <button onClick={onClose} disabled={saving} style={secondaryBtn}>إلغاء</button>
-          <button onClick={handleSave} disabled={saving} style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }}><Check size={16} /> {saving ? 'جاري الحفظ...' : 'حفظ'}</button>
+          <button onClick={handleSave} disabled={saving || uploading} style={{ ...primaryBtn, opacity: (saving || uploading) ? 0.6 : 1 }}><Check size={16} /> {saving ? 'جاري الحفظ...' : 'حفظ'}</button>
         </div>
       </div>
     </Modal>
@@ -1631,7 +2130,7 @@ const metaBox = { padding: '10px 12px', backgroundColor: '#faf7f0', border: '1px
 
 // ==================== MOUNT ====================
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<AuthGate />);
+root.render(<App />);
 </script>
 </body>
 </html>
