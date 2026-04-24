@@ -231,7 +231,7 @@ function OrderManagementApp() {
   // Realtime subscription
   useEffect(() => {
     if (!loaded) return;
-    const channel = supabase
+    const channel = sb
       .channel('orders-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
         loadData();
