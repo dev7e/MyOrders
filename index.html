@@ -97,6 +97,10 @@ const Lock = (p) => <SvgIcon {...p}><rect width="18" height="11" x="3" y="11" rx
 const Eye = (p) => <SvgIcon {...p}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></SvgIcon>;
 const EyeOff = (p) => <SvgIcon {...p}><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></SvgIcon>;
 const ArrowLeft = (p) => <SvgIcon {...p}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></SvgIcon>;
+const Users = (p) => <SvgIcon {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></SvgIcon>;
+const Crown = (p) => <SvgIcon {...p}><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></SvgIcon>;
+const Briefcase = (p) => <SvgIcon {...p}><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></SvgIcon>;
+const UserIcon = (p) => <SvgIcon {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></SvgIcon>;
 
 // ==================== CONSTANTS ====================
 const STATUSES = {
@@ -117,6 +121,20 @@ const PAYMENTS = {
   cash: { label: 'كاش', Icon: HandCoins },
   knet: { label: 'كي نت', Icon: CreditCard },
   transfer: { label: 'تحويل بنكي', Icon: Building2 }
+};
+
+const ROLES = {
+  owner: { label: 'مالك', color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe', Icon: Crown },
+  manager: { label: 'مدير', color: '#0369a1', bg: '#eff6ff', border: '#bfdbfe', Icon: Briefcase },
+  staff: { label: 'موظف', color: '#525252', bg: '#f5f5f5', border: '#d4d4d4', Icon: UserIcon }
+};
+
+const can = {
+  manageOrders: (role) => ['owner', 'manager', 'staff'].includes(role),
+  deleteOrders: (role) => ['owner', 'manager'].includes(role),
+  manageProducts: (role) => ['owner', 'manager'].includes(role),
+  manageSettings: (role) => ['owner', 'manager'].includes(role),
+  manageUsers: (role) => role === 'owner'
 };
 
 // ==================== HELPERS ====================
@@ -285,12 +303,12 @@ function LoginScreen() {
             </div>
           )}
 
-          <form onSubmit={mode === 'login' ? handleLogin : handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <form onSubmit={mode === 'login' ? handleLogin : handleForgot} method="post" action="#" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b6558', marginBottom: '6px' }}>الإيميل</label>
+              <label htmlFor="login-email" style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b6558', marginBottom: '6px' }}>الإيميل</label>
               <div style={{ position: 'relative' }}>
                 <Mail size={16} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#8a7e66' }} />
-                <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                <input id="login-email" name="email" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   style={{ ...inputStyle, paddingRight: '40px' }} />
               </div>
@@ -298,10 +316,10 @@ function LoginScreen() {
 
             {mode === 'login' && (
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b6558', marginBottom: '6px' }}>كلمة المرور</label>
+                <label htmlFor="login-password" style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b6558', marginBottom: '6px' }}>كلمة المرور</label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={16} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#8a7e66' }} />
-                  <input type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)}
+                  <input id="login-password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     style={{ ...inputStyle, paddingRight: '40px', paddingLeft: '40px' }} />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}
@@ -384,6 +402,7 @@ function OrderManagementApp({ session }) {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [settings, setSettings] = useState({ shopName: 'متجري', shopPhone: '', defaultDeliveryFee: 1.000 });
+  const [userRole, setUserRole] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [connError, setConnError] = useState(null);
   const [view, setView] = useState('dashboard');
@@ -398,10 +417,11 @@ function OrderManagementApp({ session }) {
   // Load all data from Supabase
   const loadData = async () => {
     try {
-      const [ordersRes, productsRes, settingsRes] = await Promise.all([
+      const [ordersRes, productsRes, settingsRes, roleRes] = await Promise.all([
         sb.from('orders').select('*').order('created_at', { ascending: false }),
         sb.from('products').select('*').order('created_at', { ascending: false }),
-        sb.from('settings').select('*').eq('id', 1).maybeSingle()
+        sb.from('settings').select('*').eq('id', 1).maybeSingle(),
+        sb.from('user_roles').select('role').eq('user_id', session.user.id).maybeSingle()
       ]);
 
       if (ordersRes.error) throw ordersRes.error;
@@ -417,6 +437,7 @@ function OrderManagementApp({ session }) {
           defaultDeliveryFee: Number(settingsRes.data.default_delivery_fee) || 1.000
         });
       }
+      setUserRole(roleRes.data?.role || 'staff');
       setConnError(null);
     } catch (err) {
       console.error('Load error:', err);
@@ -587,11 +608,12 @@ function OrderManagementApp({ session }) {
       <nav className="no-print" style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e8e2d4', position: 'sticky', top: 0, zIndex: 10 }}>
         <div className="hide-scrollbar" style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', gap: '4px', padding: '0 16px', overflowX: 'auto' }}>
           {[
-            { id: 'dashboard', label: 'لوحة التحكم', Icon: LayoutDashboard },
-            { id: 'orders', label: 'الطلبات', Icon: ShoppingBag },
-            { id: 'products', label: 'المنتجات', Icon: Package },
-            { id: 'settings', label: 'الإعدادات', Icon: SettingsIcon }
-          ].map(t => {
+            { id: 'dashboard', label: 'لوحة التحكم', Icon: LayoutDashboard, show: true },
+            { id: 'orders', label: 'الطلبات', Icon: ShoppingBag, show: true },
+            { id: 'products', label: 'المنتجات', Icon: Package, show: true },
+            { id: 'users', label: 'المستخدمون', Icon: Users, show: can.manageUsers(userRole) },
+            { id: 'settings', label: 'الإعدادات', Icon: SettingsIcon, show: true }
+          ].filter(t => t.show).map(t => {
             const active = view === t.id;
             return (
               <button key={t.id} onClick={() => setView(t.id)}
@@ -605,13 +627,14 @@ function OrderManagementApp({ session }) {
 
       <main className="no-print" style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 16px' }}>
         {view === 'dashboard' && <DashboardView orders={orders} onViewOrder={setViewingOrder} onNewOrder={() => { setEditingOrder(null); setShowOrderForm(true); }} onGoToOrders={() => setView('orders')} />}
-        {view === 'orders' && <OrdersView orders={orders} onView={setViewingOrder} onEdit={(o) => { setEditingOrder(o); setShowOrderForm(true); }} onStatusChange={updateOrderStatus} onPrint={setPrintOrder} onNewOrder={() => { setEditingOrder(null); setShowOrderForm(true); }} />}
-        {view === 'products' && <ProductsView products={products} onAdd={() => { setEditingProduct(null); setShowProductForm(true); }} onEdit={(p) => { setEditingProduct(p); setShowProductForm(true); }} onDelete={deleteProduct} />}
-        {view === 'settings' && <SettingsView settings={settings} onSave={saveSettings} />}
+        {view === 'orders' && <OrdersView orders={orders} userRole={userRole} onView={setViewingOrder} onEdit={(o) => { setEditingOrder(o); setShowOrderForm(true); }} onStatusChange={updateOrderStatus} onPrint={setPrintOrder} onNewOrder={() => { setEditingOrder(null); setShowOrderForm(true); }} />}
+        {view === 'products' && <ProductsView products={products} userRole={userRole} onAdd={() => { setEditingProduct(null); setShowProductForm(true); }} onEdit={(p) => { setEditingProduct(p); setShowProductForm(true); }} onDelete={deleteProduct} />}
+        {view === 'users' && can.manageUsers(userRole) && <UsersView currentUserId={session.user.id} showToast={showToast} />}
+        {view === 'settings' && <SettingsView settings={settings} userRole={userRole} onSave={saveSettings} />}
       </main>
 
       {showOrderForm && <OrderFormModal order={editingOrder} products={products} defaultDeliveryFee={settings.defaultDeliveryFee} onSave={saveOrder} onClose={() => { setShowOrderForm(false); setEditingOrder(null); }} />}
-      {viewingOrder && <OrderDetailModal order={viewingOrder} onClose={() => setViewingOrder(null)} onEdit={() => { setEditingOrder(viewingOrder); setViewingOrder(null); setShowOrderForm(true); }} onDelete={() => deleteOrder(viewingOrder.id)} onStatusChange={(s) => { updateOrderStatus(viewingOrder.id, s); setViewingOrder({ ...viewingOrder, status: s }); }} onPrint={() => { setPrintOrder(viewingOrder); setViewingOrder(null); }} />}
+      {viewingOrder && <OrderDetailModal order={viewingOrder} userRole={userRole} onClose={() => setViewingOrder(null)} onEdit={() => { setEditingOrder(viewingOrder); setViewingOrder(null); setShowOrderForm(true); }} onDelete={() => deleteOrder(viewingOrder.id)} onStatusChange={(s) => { updateOrderStatus(viewingOrder.id, s); setViewingOrder({ ...viewingOrder, status: s }); }} onPrint={() => { setPrintOrder(viewingOrder); setViewingOrder(null); }} />}
       {showProductForm && <ProductFormModal product={editingProduct} onSave={saveProduct} onClose={() => { setShowProductForm(false); setEditingProduct(null); }} />}
       {printOrder && <InvoicePrintView order={printOrder} settings={settings} onClose={() => setPrintOrder(null)} />}
 
@@ -681,7 +704,7 @@ function StatCard({ label, value, suffix, color, Icon }) {
 }
 
 // ==================== ORDERS ====================
-function OrdersView({ orders, onView, onEdit, onStatusChange, onPrint, onNewOrder }) {
+function OrdersView({ orders, userRole, onView, onEdit, onStatusChange, onPrint, onNewOrder }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -787,18 +810,19 @@ function OrderRow({ order, onClick, showActions, onEdit, onPrint, onStatusChange
 }
 
 // ==================== PRODUCTS ====================
-function ProductsView({ products, onAdd, onEdit, onDelete }) {
+function ProductsView({ products, userRole, onAdd, onEdit, onDelete }) {
+  const canEdit = can.manageProducts(userRole);
   return (
     <div className="animate-fade-in">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
         <h2 className="font-display" style={{ margin: 0, fontSize: '22px', fontWeight: 600 }}>
           المنتجات <span style={{ color: '#8a7e66', fontSize: '16px', fontWeight: 500 }}>({products.length})</span>
         </h2>
-        <button onClick={onAdd} style={primaryBtn}><Plus size={16} /> إضافة منتج</button>
+        {canEdit && <button onClick={onAdd} style={primaryBtn}><Plus size={16} /> إضافة منتج</button>}
       </div>
       {products.length === 0 ? (
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px' }}>
-          <EmptyState icon={<Package size={32} color="#bdb29a" />} title="ما فيه منتجات بعد" description="ضيف منتجاتك عشان تقدر تختار منها في الطلبات" action={<button onClick={onAdd} style={primaryBtn}><Plus size={16} /> إضافة منتج</button>} />
+          <EmptyState icon={<Package size={32} color="#bdb29a" />} title="ما فيه منتجات بعد" description={canEdit ? 'ضيف منتجاتك عشان تقدر تختار منها في الطلبات' : 'لا توجد منتجات. تواصل مع المدير لإضافتها.'} action={canEdit && <button onClick={onAdd} style={primaryBtn}><Plus size={16} /> إضافة منتج</button>} />
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
@@ -813,10 +837,12 @@ function ProductsView({ products, onAdd, onEdit, onDelete }) {
                   <div className="num" style={{ fontSize: '14px', color: '#0f5e52', fontWeight: 600 }}>{fmt(p.price)} د.ك</div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button onClick={() => onEdit(p)} style={{ ...smallBtn, flex: 1 }}><Pencil size={13} /> تعديل</button>
-                <button onClick={() => onDelete(p.id)} style={{ ...smallBtn, flex: 1, color: '#b91c1c', borderColor: '#fecaca' }}><Trash2 size={13} /> حذف</button>
-              </div>
+              {canEdit && (
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button onClick={() => onEdit(p)} style={{ ...smallBtn, flex: 1 }}><Pencil size={13} /> تعديل</button>
+                  <button onClick={() => onDelete(p.id)} style={{ ...smallBtn, flex: 1, color: '#b91c1c', borderColor: '#fecaca' }}><Trash2 size={13} /> حذف</button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -825,24 +851,295 @@ function ProductsView({ products, onAdd, onEdit, onDelete }) {
   );
 }
 
+// ==================== USERS MANAGEMENT ====================
+function UsersView({ currentUserId, showToast }) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showInvite, setShowInvite] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+
+  const loadUsers = async () => {
+    setLoading(true);
+    const { data, error } = await sb.from('user_roles').select('*').order('created_at', { ascending: true });
+    if (error) {
+      showToast('خطأ: ' + error.message, 'error');
+    } else {
+      setUsers(data || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadUsers(); }, []);
+
+  const updateRole = async (user_id, newRole) => {
+    const { error } = await sb.from('user_roles').update({ role: newRole }).eq('user_id', user_id);
+    if (error) showToast('خطأ: ' + error.message, 'error');
+    else { showToast('تم تحديث الدور'); await loadUsers(); }
+  };
+
+  const updateName = async (user_id, full_name) => {
+    const { error } = await sb.from('user_roles').update({ full_name }).eq('user_id', user_id);
+    if (error) showToast('خطأ: ' + error.message, 'error');
+    else { showToast('تم تحديث الاسم'); await loadUsers(); }
+  };
+
+  const removeUser = async (user) => {
+    if (user.user_id === currentUserId) { alert('ما تقدر تحذف حسابك بنفسك'); return; }
+    if (user.role === 'owner') {
+      const owners = users.filter(u => u.role === 'owner');
+      if (owners.length <= 1) { alert('لازم يبقى مالك واحد على الأقل'); return; }
+    }
+    if (!window.confirm(`تبي تحذف صلاحية ${user.email}؟ هذا ما يقدر يدخل النظام بعدها.`)) return;
+    const { error } = await sb.from('user_roles').delete().eq('user_id', user.user_id);
+    if (error) showToast('خطأ: ' + error.message, 'error');
+    else { showToast('تم حذف المستخدم'); await loadUsers(); }
+  };
+
+  return (
+    <div className="animate-fade-in">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+        <h2 className="font-display" style={{ margin: 0, fontSize: '22px', fontWeight: 600 }}>
+          المستخدمون <span style={{ color: '#8a7e66', fontSize: '16px', fontWeight: 500 }}>({users.length})</span>
+        </h2>
+        <button onClick={() => setShowInvite(true)} style={primaryBtn}><Plus size={16} /> إضافة مستخدم</button>
+      </div>
+
+      <div style={{ padding: '12px 16px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', marginBottom: '16px', fontSize: '13px', color: '#1e40af', lineHeight: 1.7 }}>
+        💡 <strong>الأدوار:</strong> <Crown size={12} style={{ display: 'inline', verticalAlign: 'middle' }} /> <strong>مالك</strong> (كل الصلاحيات + إدارة المستخدمين) ·{' '}
+        <Briefcase size={12} style={{ display: 'inline', verticalAlign: 'middle' }} /> <strong>مدير</strong> (كل شي عدا إدارة المستخدمين) ·{' '}
+        <UserIcon size={12} style={{ display: 'inline', verticalAlign: 'middle' }} /> <strong>موظف</strong> (طلبات فقط، بدون حذف)
+      </div>
+
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px', overflow: 'hidden' }}>
+        {loading ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: '#8a7e66', fontSize: '13px' }}>جاري التحميل...</div>
+        ) : users.length === 0 ? (
+          <EmptyState icon={<Users size={32} color="#bdb29a" />} title="ما فيه مستخدمين" description="ضيف أول مستخدم" />
+        ) : users.map(u => {
+          const roleInfo = ROLES[u.role] || ROLES.staff;
+          const isMe = u.user_id === currentUserId;
+          return (
+            <div key={u.user_id} style={{ borderBottom: '1px solid #f0ece2', padding: '14px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: roleInfo.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: roleInfo.color, fontSize: '16px', fontWeight: 600, flexShrink: 0 }}>
+                {(u.full_name || u.email)[0].toUpperCase()}
+              </div>
+              <div style={{ flex: 1, minWidth: '200px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: 600, fontSize: '14px' }}>{u.full_name || u.email.split('@')[0]}</span>
+                  {isMe && <span style={{ fontSize: '10px', backgroundColor: '#f0ece2', color: '#6b6558', padding: '2px 7px', borderRadius: '999px', fontWeight: 500 }}>أنت</span>}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '999px', backgroundColor: roleInfo.bg, color: roleInfo.color, border: '1px solid ' + roleInfo.border }}>
+                    <roleInfo.Icon size={10} /> {roleInfo.label}
+                  </span>
+                </div>
+                <div style={{ fontSize: '12px', color: '#8a7e66' }}>{u.email}</div>
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button onClick={() => setEditingUser(u)} style={smallBtn}><Pencil size={13} /> تعديل</button>
+                {!isMe && <button onClick={() => removeUser(u)} style={{ ...smallBtn, color: '#b91c1c', borderColor: '#fecaca' }}><Trash2 size={13} /></button>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {showInvite && <InviteUserModal existingEmails={users.map(u => u.email)} onClose={() => setShowInvite(false)} onDone={() => { setShowInvite(false); loadUsers(); }} showToast={showToast} />}
+      {editingUser && <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} onSave={async (changes) => {
+        if (changes.full_name !== editingUser.full_name) await updateName(editingUser.user_id, changes.full_name);
+        if (changes.role !== editingUser.role) await updateRole(editingUser.user_id, changes.role);
+        setEditingUser(null);
+      }} isCurrentUser={editingUser.user_id === currentUserId} />}
+    </div>
+  );
+}
+
+function InviteUserModal({ existingEmails, onClose, onDone, showToast }) {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({ email: '', full_name: '', role: 'staff' });
+
+  const handleNext = () => {
+    if (!form.email.trim() || !form.email.includes('@')) { alert('أدخل إيميل صحيح'); return; }
+    if (existingEmails.includes(form.email.trim().toLowerCase())) { alert('هذا الإيميل مضاف من قبل'); return; }
+    setStep(2);
+  };
+
+  return (
+    <Modal onClose={onClose} title="إضافة مستخدم جديد" size="small">
+      {step === 1 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <Field label="الإيميل *">
+            <input type="email" autoFocus value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={inputStyle} placeholder="employee@example.com" />
+          </Field>
+          <Field label="الاسم (اختياري)">
+            <input type="text" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} style={inputStyle} placeholder="مثلاً: أحمد محمد" />
+          </Field>
+          <Field label="الدور *">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {Object.entries(ROLES).map(([k, v]) => {
+                const active = form.role === k;
+                return (
+                  <button key={k} type="button" onClick={() => setForm({ ...form, role: k })}
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderRadius: '10px', border: '2px solid ' + (active ? v.color : '#e8e2d4'), backgroundColor: active ? v.bg : '#ffffff', cursor: 'pointer', textAlign: 'right' }}>
+                    <v.Icon size={18} color={v.color} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: active ? v.color : '#1f1b12' }}>{v.label}</div>
+                      <div style={{ fontSize: '11px', color: '#8a7e66', marginTop: '2px' }}>
+                        {k === 'owner' && 'كل الصلاحيات + إدارة المستخدمين'}
+                        {k === 'manager' && 'كل شي عدا إدارة المستخدمين'}
+                        {k === 'staff' && 'الطلبات فقط، بدون حذف'}
+                      </div>
+                    </div>
+                    {active && <Check size={16} color={v.color} />}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '8px' }}>
+            <button onClick={onClose} style={secondaryBtn}>إلغاء</button>
+            <button onClick={handleNext} style={primaryBtn}>التالي</button>
+          </div>
+        </div>
+      ) : (
+        <InviteStep2 form={form} onBack={() => setStep(1)} onDone={onDone} showToast={showToast} />
+      )}
+    </Modal>
+  );
+}
+
+function InviteStep2({ form, onBack, onDone, showToast }) {
+  const [copied, setCopied] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const copy = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleConfirm = async () => {
+    setChecking(true);
+    try {
+      // Check if user_roles already has this email (means trigger added them)
+      const { data: existing } = await sb.from('user_roles').select('*').eq('email', form.email.trim().toLowerCase()).maybeSingle();
+      if (existing) {
+        // Update role and name
+        const { error } = await sb.from('user_roles').update({
+          role: form.role,
+          full_name: form.full_name || null
+        }).eq('user_id', existing.user_id);
+        if (error) throw error;
+        showToast('تم إضافة المستخدم');
+        onDone();
+      } else {
+        alert('ما حصّلنا المستخدم. تأكد إنك أنشأت الحساب في Supabase بنفس الإيميل، وانتظر ثانية ثم اضغط مرة ثانية.');
+      }
+    } catch (err) {
+      alert('خطأ: ' + err.message);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ padding: '14px', backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', fontSize: '13px', color: '#92400e', lineHeight: 1.7 }}>
+        <strong>⚠️ إضافة المستخدم تحتاج خطوتين:</strong>
+        <ol style={{ margin: '8px 0 0', paddingRight: '20px' }}>
+          <li>أنشئ الحساب في Supabase</li>
+          <li>ارجع هني واضغط الزر تحت</li>
+        </ol>
+      </div>
+
+      <div>
+        <h4 style={{ margin: '0 0 10px', fontSize: '14px', fontWeight: 600 }}>الخطوة 1: أنشئ الحساب في Supabase</h4>
+        <ol style={{ margin: 0, paddingRight: '20px', fontSize: '13px', color: '#4a4438', lineHeight: 2 }}>
+          <li>افتح <a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer" style={{ color: '#0f5e52', fontWeight: 600 }}>لوحة Supabase</a> → <strong>Authentication</strong> → <strong>Users</strong></li>
+          <li>اضغط <strong>Add user → Create new user</strong></li>
+          <li>الصق الإيميل:
+            <div style={{ display: 'flex', gap: '6px', margin: '4px 0' }}>
+              <code style={{ flex: 1, padding: '6px 10px', backgroundColor: '#f6f2eb', borderRadius: '6px', fontSize: '12px', fontFamily: 'monospace' }}>{form.email}</code>
+              <button onClick={() => copy(form.email)} style={{ ...smallBtn, minWidth: '70px' }}>{copied ? '✓ تم' : 'نسخ'}</button>
+            </div>
+          </li>
+          <li>أنشئ كلمة مرور مؤقتة وأرسلها للموظف بشكل آمن</li>
+          <li>فعّل <strong>Auto Confirm User</strong> ثم اضغط <strong>Create user</strong></li>
+        </ol>
+      </div>
+
+      <div>
+        <h4 style={{ margin: '0 0 10px', fontSize: '14px', fontWeight: 600 }}>الخطوة 2: ثبّت دوره</h4>
+        <button onClick={handleConfirm} disabled={checking}
+          style={{ ...primaryBtn, width: '100%', justifyContent: 'center', opacity: checking ? 0.6 : 1 }}>
+          {checking ? 'جاري التحقق...' : 'أنشأت الحساب، ثبّت الدور الآن'}
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px', paddingTop: '8px', borderTop: '1px solid #e8e2d4' }}>
+        <button onClick={onBack} style={secondaryBtn}><ArrowLeft size={14} /> رجوع</button>
+      </div>
+    </div>
+  );
+}
+
+function EditUserModal({ user, onClose, onSave, isCurrentUser }) {
+  const [form, setForm] = useState({ full_name: user.full_name || '', role: user.role });
+  return (
+    <Modal onClose={onClose} title={`تعديل ${user.email}`} size="small">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <Field label="الاسم">
+          <input type="text" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} style={inputStyle} placeholder="الاسم الكامل" />
+        </Field>
+        <Field label="الدور">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {Object.entries(ROLES).map(([k, v]) => {
+              const active = form.role === k;
+              const disabled = isCurrentUser && k !== 'owner' && user.role === 'owner';
+              return (
+                <button key={k} type="button" disabled={disabled} onClick={() => !disabled && setForm({ ...form, role: k })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', border: '2px solid ' + (active ? v.color : '#e8e2d4'), backgroundColor: active ? v.bg : '#ffffff', cursor: disabled ? 'not-allowed' : 'pointer', textAlign: 'right', opacity: disabled ? 0.5 : 1 }}>
+                  <v.Icon size={16} color={v.color} />
+                  <span style={{ flex: 1, fontSize: '14px', fontWeight: active ? 600 : 500 }}>{v.label}</span>
+                  {active && <Check size={14} color={v.color} />}
+                </button>
+              );
+            })}
+          </div>
+          {isCurrentUser && user.role === 'owner' && (
+            <div style={{ fontSize: '11px', color: '#92400e', marginTop: '6px' }}>⚠️ ما تقدر تنزّل دورك من مالك. اطلب من مالك ثاني يسويها.</div>
+          )}
+        </Field>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '8px' }}>
+          <button onClick={onClose} style={secondaryBtn}>إلغاء</button>
+          <button onClick={() => onSave(form)} style={primaryBtn}><Check size={16} /> حفظ</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 // ==================== SETTINGS ====================
-function SettingsView({ settings, onSave }) {
+function SettingsView({ settings, userRole, onSave }) {
   const [form, setForm] = useState(settings);
+  const canEdit = can.manageSettings(userRole);
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '640px' }}>
       <h2 className="font-display" style={{ margin: '0 0 20px', fontSize: '22px', fontWeight: 600 }}>الإعدادات</h2>
+      {!canEdit && (
+        <div style={{ padding: '12px 16px', backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', marginBottom: '16px', fontSize: '13px', color: '#92400e' }}>
+          🔒 العرض فقط — تعديل الإعدادات محصور بالمدير والمالك
+        </div>
+      )}
       <div style={{ backgroundColor: '#ffffff', border: '1px solid #e8e2d4', borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '16px' }}>
         <Field label="اسم المحل / البراند">
-          <input type="text" value={form.shopName} onChange={(e) => setForm({ ...form, shopName: e.target.value })} style={inputStyle} placeholder="اسم المحل" />
+          <input type="text" disabled={!canEdit} value={form.shopName} onChange={(e) => setForm({ ...form, shopName: e.target.value })} style={inputStyle} placeholder="اسم المحل" />
         </Field>
         <Field label="رقم التلفون">
-          <input type="tel" value={form.shopPhone} onChange={(e) => setForm({ ...form, shopPhone: e.target.value })} style={inputStyle} placeholder="مثال: 99999999" />
+          <input type="tel" disabled={!canEdit} value={form.shopPhone} onChange={(e) => setForm({ ...form, shopPhone: e.target.value })} style={inputStyle} placeholder="مثال: 99999999" />
         </Field>
         <Field label="سعر التوصيل الافتراضي (د.ك)">
-          <input type="number" step="0.001" value={form.defaultDeliveryFee} onChange={(e) => setForm({ ...form, defaultDeliveryFee: parseFloat(e.target.value) || 0 })} style={inputStyle} />
+          <input type="number" disabled={!canEdit} step="0.001" value={form.defaultDeliveryFee} onChange={(e) => setForm({ ...form, defaultDeliveryFee: parseFloat(e.target.value) || 0 })} style={inputStyle} />
         </Field>
-        <button onClick={() => onSave(form)} style={{ ...primaryBtn, alignSelf: 'flex-start' }}>حفظ الإعدادات</button>
+        {canEdit && <button onClick={() => onSave(form)} style={{ ...primaryBtn, alignSelf: 'flex-start' }}>حفظ الإعدادات</button>}
       </div>
 
       <div style={{ backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '14px', padding: '16px 20px' }}>
@@ -1039,9 +1336,10 @@ function ProductPickerModal({ products, onPick, onClose }) {
 }
 
 // ==================== ORDER DETAIL ====================
-function OrderDetailModal({ order, onClose, onEdit, onDelete, onStatusChange, onPrint }) {
+function OrderDetailModal({ order, userRole, onClose, onEdit, onDelete, onStatusChange, onPrint }) {
   const source = SOURCES[order.source] || SOURCES.other;
   const payment = PAYMENTS[order.paymentMethod] || PAYMENTS.cash;
+  const canDelete = can.deleteOrders(userRole);
 
   const addressStr = [
     order.address?.area, order.address?.block && `قطعة ${order.address.block}`,
@@ -1126,7 +1424,7 @@ function OrderDetailModal({ order, onClose, onEdit, onDelete, onStatusChange, on
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid #e8e2d4' }}>
           <button onClick={onPrint} style={primaryBtn}><Printer size={16} /> طباعة الفاتورة</button>
           <button onClick={onEdit} style={secondaryBtn}><Pencil size={14} /> تعديل</button>
-          <button onClick={onDelete} style={{ ...secondaryBtn, color: '#b91c1c', borderColor: '#fecaca', marginRight: 'auto' }}><Trash2 size={14} /> حذف</button>
+          {canDelete && <button onClick={onDelete} style={{ ...secondaryBtn, color: '#b91c1c', borderColor: '#fecaca', marginRight: 'auto' }}><Trash2 size={14} /> حذف</button>}
         </div>
       </div>
     </Modal>
